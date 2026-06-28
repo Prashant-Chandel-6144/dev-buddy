@@ -32,6 +32,7 @@ model User {
   sessions               Session[]
   accounts               Account[]
   githubInstallation     GithubInstallation?
+  workspaces             Workspace[]
 
   @@unique([email])
   @@map("user")
@@ -130,4 +131,82 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Workspace {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects  Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("workspace")
+}
+
+model Project {
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  workspaceId     String
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  featureRequests FeatureRequest[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("project")
+}
+
+model FeatureRequest {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  status      String   @default("pending_analysis") // pending_analysis | clarifying | drafting_prd | approved | in_progress | completed
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  prd         PRD?
+  messages    Message[]
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("feature_request")
+}
+
+model Message {
+  id               String         @id @default(cuid())
+  featureRequestId String
+  featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+  role             String         // "user" | "assistant"
+  content          String
+  createdAt        DateTime       @default(now())
+
+  @@map("message")
+}
+
+model PRD {
+  id               String         @id @default(cuid())
+  featureRequestId String         @unique
+  featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+  content          String         // Markdown content
+  status           String         @default("draft") // draft | approved
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("prd")
+}
+
+model Task {
+  id               String         @id @default(cuid())
+  title            String
+  description      String?
+  status           String         @default("todo") // todo | in_progress | done
+  featureRequestId String
+  featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+  order            Int            @default(0) // For Kanban ordering
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("task")
 }

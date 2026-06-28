@@ -53,9 +53,9 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
             <Field>
               <GithubSignInForm callbackUrl={callbackUrl} />
             </Field>
-            <Field>
+            {/* <Field>
               <GoogleSignInForm callbackUrl={callbackUrl} />
-            </Field>
+            </Field> */}
             <Field>
               <FieldDescription className="text-center mt-2">
                 We only request the permissions needed to identify your

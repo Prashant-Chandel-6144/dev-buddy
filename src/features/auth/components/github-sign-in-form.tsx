@@ -46,12 +46,3 @@ export function GithubSignInForm({ callbackUrl }: GithubSignInFormProps) {
     </form>
   )
 }
-size = "lg"
-disabled = { pending }
-onClick = { handleLogin }
-  >
-  { pending?<Spinner className = "size-4" /> : <GitHubIcon />}
-{ pending ? "Redirecting to GitHub…" : "Continue with GitHub" }
-      </Button >
-    )
-}
