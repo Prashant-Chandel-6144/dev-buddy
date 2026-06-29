@@ -136,11 +136,14 @@ model Verification {
 model Workspace {
   id        String    @id @default(cuid())
   name      String
+  slug      String?    @unique
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   projects  Project[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@index([userId])
 
   @@map("workspace")
 }
@@ -149,6 +152,8 @@ model Project {
   id              String           @id @default(cuid())
   name            String
   description     String?
+  githubRepoUrl   String?
+  githubRepoName  String?
   workspaceId     String
   workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   featureRequests FeatureRequest[]
@@ -168,6 +173,7 @@ model FeatureRequest {
   prd         PRD?
   messages    Message[]
   tasks       Task[]
+  source      String   @default("MANUAL") //EMAIL | TICKET | CALL | MANUAL | AGENT
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -189,6 +195,12 @@ model PRD {
   id               String         @id @default(cuid())
   featureRequestId String         @unique
   featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+  problemStatement   String
+  edgeCases String
+  goals String[]
+  nonGoals String[]
+  acceptanceCriteria String[]
+  implementationApproach String[]
   content          String         // Markdown content
   status           String         @default("draft") // draft | approved
   createdAt        DateTime       @default(now())
@@ -201,7 +213,7 @@ model Task {
   id               String         @id @default(cuid())
   title            String
   description      String?
-  status           String         @default("todo") // todo | in_progress | done
+  status           String         @default("TODO") // TODO | IN_PROGRESS | DONE
   featureRequestId String
   featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
   order            Int            @default(0) // For Kanban ordering

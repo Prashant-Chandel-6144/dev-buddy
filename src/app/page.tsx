@@ -8,10 +8,10 @@ export default function Home() {
       <BackgroundGrid className="fixed inset-0 -z-10" />
       <main className="z-10 flex flex-col items-center gap-8 px-4 py-12 sm:px-6 lg:px-8">
         <h1 className="text-5xl font-bold tracking-tighter text-primary sm:text-6xl">
-          Welcome to Dev Buddy
+          Welcome to ShipMate
         </h1>
         <p className="max-w-xl text-center text-lg text-muted-foreground">
-          A modern development companion powered by AI. Explore, code, and collaborate with a sleek UI built on shadcn/ui and Tailwind.
+          A modern AI-powered product development platform. Explore, code, and collaborate with a sleek UI built on shadcn/ui and Tailwind.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
           <Link
