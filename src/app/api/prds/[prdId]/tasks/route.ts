@@ -3,9 +3,17 @@ import { createTaskSchema, aiGeneratedTaskSchema } from "@/lib/validations";
 import { NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/agent";
 import { z } from "zod";
+import { getServerSession } from "@/features/auth/actions";
 
 export async function GET(request: Request, { params }: { params: { prdId: string } }) {
     try {
+      const session = await getServerSession()
+          if(!session){
+            return NextResponse.json(
+              { error: "Unauthorized" },
+              { status: 401 },
+            );
+          }
         const { prdId } = await params;
         console.log("Fetching tasks for PRD ID:", prdId);
         
@@ -52,6 +60,13 @@ export async function GET(request: Request, { params }: { params: { prdId: strin
 
 export async function POST(request: Request, { params }: { params: { prdId: string } }) {
     try {
+      const session = await getServerSession()
+    if(!session){
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
         const { prdId } = await params;
         console.log("Creating task for PRD ID:", prdId);
 

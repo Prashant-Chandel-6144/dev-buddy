@@ -2,9 +2,17 @@ import { getOpenAIClient } from "@/lib/agent";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { aiPRDResponseSchema, createPRDSchema, updatePRDSchema } from "@/lib/validations";
+import { getServerSession } from "@/features/auth/actions";
 
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession()
+    if(!session){
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     // Parse featureId from URL query parameters (e.g. /api/prds?featureId=xyz)
     const { searchParams } = new URL(request.url);
     const featureId = searchParams.get("featureId");
@@ -53,6 +61,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession()
+    if(!session){
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const body = await request.json();
     const { featureId, action = "save", prdData } = body;
 
@@ -234,6 +249,13 @@ Return ONLY JSON in this exact format:
 
 export async function PATCH(request: Request) {
   try {
+    const session = await getServerSession()
+    if(!session){
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const body = await request.json();
     const { featureId, prdData } = body;
 

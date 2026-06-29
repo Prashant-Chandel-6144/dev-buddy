@@ -65,6 +65,8 @@ model PullRequest {
   reviewedAt     DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  featureRequestId String?
+  featureRequest   FeatureRequest? @relation(fields: [featureRequestId], references: [id], onDelete: SetNull)
 
   @@unique([repoFullName, prNumber])
   @@map("pull_request")
@@ -173,6 +175,7 @@ model FeatureRequest {
   prd         PRD?
   messages    Message[]
   tasks       Task[]
+  pullRequests PullRequest[]
   source      String   @default("MANUAL") //EMAIL | TICKET | CALL | MANUAL | AGENT
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

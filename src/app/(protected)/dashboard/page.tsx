@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { BackgroundGrid } from "@/components/ui/background-grid";
 
 interface Workspace {
   id: string;
@@ -164,15 +165,16 @@ export default function DashboardOverviewPage() {
   };
 
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-8 bg-gradient-to-br from-background via-background to-accent/5 min-h-screen">
+    <div className="relative flex-1 p-6 md:p-10 space-y-8 bg-background min-h-screen">
+      <BackgroundGrid className="fixed inset-0 pointer-events-none opacity-40" />
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="z-10 relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
-            <Sparkles className="size-7 text-primary animate-pulse" />
-            DevBuddy Dashboard
+          <h1 className="text-2xl font-light uppercase tracking-widest font-mono text-white flex items-center gap-2 text-glow">
+            <Sparkles className="size-5 text-primary animate-pulse" />
+            DevBuddy Panel
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-xs font-mono text-muted-foreground mt-1 uppercase tracking-wider">
             Manage your workspaces, track projects, and generate product requirements documents instantly.
           </p>
         </div>
@@ -182,13 +184,13 @@ export default function DashboardOverviewPage() {
           {!isLoadingWorkspaces && workspaces.length > 0 && (
             <div className="flex items-center gap-2 w-full md:w-64">
               <Briefcase className="size-4 text-muted-foreground shrink-0" />
-              <Select value={selectedWorkspaceId} onValueChange={setSelectedWorkspaceId}>
-                <SelectTrigger className="w-full bg-card/50 backdrop-blur-sm border-accent/20">
+              <Select value={selectedWorkspaceId} onValueChange={(val) => setSelectedWorkspaceId(val ?? "")}>
+                <SelectTrigger className="w-full bg-card/25 backdrop-blur-sm border-white/5 rounded-full px-4 font-mono text-xs text-muted-foreground uppercase tracking-wider">
                   <SelectValue placeholder="Select Workspace" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card/90 border-white/5 backdrop-blur-md">
                   {workspaces.map((ws) => (
-                    <SelectItem key={ws.id} value={ws.id}>
+                    <SelectItem key={ws.id} value={ws.id} className="font-mono text-xs uppercase tracking-wider">
                       {ws.name}
                     </SelectItem>
                   ))}
@@ -199,8 +201,8 @@ export default function DashboardOverviewPage() {
 
           {/* New Workspace Trigger */}
           <Dialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0 bg-card/50 border-accent/20 hover:bg-accent/15" title="New Workspace">
+            <DialogTrigger >
+              <Button variant="outline" size="icon" className="shrink-0 bg-card/20 border-white/10 hover:bg-white/5 rounded-full" title="New Workspace">
                 <Plus className="size-4" />
               </Button>
             </DialogTrigger>
@@ -258,7 +260,7 @@ export default function DashboardOverviewPage() {
           </CardHeader>
           <CardContent>
             <Dialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen}>
-              <DialogTrigger asChild>
+              <DialogTrigger >
                 <Button className="gap-2">
                   <PlusCircle className="size-4" />
                   Create First Workspace
@@ -271,69 +273,73 @@ export default function DashboardOverviewPage() {
         /* Workspace Projects List */
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Folder className="size-5 text-primary" />
-              Projects
+            <h2 className="text-lg font-light uppercase tracking-widest font-mono text-white flex items-center gap-2 text-glow">
+              <Folder className="size-4 text-primary animate-pulse" />
+              Projects Registry
             </h2>
 
             {/* New Project Trigger */}
             <Dialog open={isProjectModalOpen} onOpenChange={setIsProjectModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/20">
+              <DialogTrigger >
+                <Button className="gap-2 bg-primary hover:bg-primary/95 text-primary-foreground font-mono uppercase tracking-wider text-xs glow-amber">
                   <Plus className="size-4" />
                   New Project
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px] bg-card/95 border-white/5 backdrop-blur-md rounded-none">
                 <DialogHeader>
-                  <DialogTitle>Create New Project</DialogTitle>
-                  <DialogDescription>
-                    Add a new project inside the selected workspace.
+                  <DialogTitle className="font-mono uppercase tracking-wider text-white">Create New Project</DialogTitle>
+                  <DialogDescription className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Add a new project inside the selected workspace context.
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleCreateProject} className="space-y-4 py-4">
+                <form onSubmit={handleCreateProject} className="space-y-4 py-4 font-mono text-xs">
                   <div className="space-y-2">
-                    <Label htmlFor="proj-name">Project Name</Label>
+                    <Label htmlFor="proj-name" className="uppercase tracking-wider">Project Name</Label>
                     <Input
                       id="proj-name"
                       value={newProjectName}
                       onChange={(e) => setNewProjectName(e.target.value)}
                       placeholder="e.g. Developer Buddy"
                       required
+                      className="bg-card/30 border-white/5 text-white placeholder-muted-foreground/60 rounded-full px-4"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="proj-desc">Description</Label>
+                    <Label htmlFor="proj-desc" className="uppercase tracking-wider">Description</Label>
                     <Textarea
                       id="proj-desc"
                       value={newProjectDesc}
                       onChange={(e) => setNewProjectDesc(e.target.value)}
                       placeholder="Short summary of what this project represents..."
                       rows={3}
+                      className="bg-card/30 border-white/5 text-white placeholder-muted-foreground/60 rounded-none p-3"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="proj-repo-name">GitHub Repo Name</Label>
+                      <Label htmlFor="proj-repo-name" className="uppercase tracking-wider">GitHub Repo Name</Label>
                       <Input
                         id="proj-repo-name"
                         value={newProjectRepoName}
                         onChange={(e) => setNewProjectRepoName(e.target.value)}
                         placeholder="e.g. shipmate"
+                        className="bg-card/30 border-white/5 text-white placeholder-muted-foreground/60 rounded-full px-4"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="proj-repo-url">GitHub Repo URL</Label>
+                      <Label htmlFor="proj-repo-url" className="uppercase tracking-wider">GitHub Repo URL</Label>
                       <Input
                         id="proj-repo-url"
                         value={newProjectRepoUrl}
                         onChange={(e) => setNewProjectRepoUrl(e.target.value)}
                         placeholder="e.g. https://github.com/..."
+                        className="bg-card/30 border-white/5 text-white placeholder-muted-foreground/60 rounded-full px-4"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit" disabled={isSubmittingProject}>
+                    <Button type="submit" disabled={isSubmittingProject} className="w-full sm:w-auto font-mono uppercase tracking-wider text-xs">
                       {isSubmittingProject ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
@@ -351,24 +357,24 @@ export default function DashboardOverviewPage() {
           {isLoadingProjects ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse bg-card/40 border-accent/10">
+                <Card key={i} className="animate-pulse bg-card/25 border-white/5 rounded-none">
                   <CardHeader className="h-32" />
-                  <CardFooter className="h-10 bg-accent/5" />
+                  <CardFooter className="h-10 bg-white/[0.01]" />
                 </Card>
               ))}
             </div>
           ) : projects.length === 0 ? (
             /* Empty Projects State */
-            <Card className="border-dashed border-accent/30 bg-card/20 py-16 text-center max-w-xl mx-auto">
+            <Card className="border-dashed border-white/10 bg-card/20 py-16 text-center max-w-xl mx-auto rounded-none">
               <CardHeader className="flex flex-col items-center">
                 <Folder className="size-8 text-muted-foreground mb-2" />
-                <CardTitle className="text-lg">No Projects Yet</CardTitle>
-                <CardDescription>
-                  Start by adding your first project inside this workspace.
+                <CardTitle className="text-base font-mono uppercase tracking-wider">No Projects Registered</CardTitle>
+                <CardDescription className="text-xs uppercase tracking-wider">
+                  Start by adding your first project inside this workspace registry.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" onClick={() => setIsProjectModalOpen(true)}>
+                <Button variant="outline" onClick={() => setIsProjectModalOpen(true)} className="font-mono text-xs uppercase tracking-wider">
                   Create Project
                 </Button>
               </CardContent>
@@ -382,32 +388,32 @@ export default function DashboardOverviewPage() {
                   href={`/dashboard/projects/${project.id}`}
                   className="group block"
                 >
-                  <Card className="h-full border-accent/15 bg-card/40 backdrop-blur-md hover:bg-card/70 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col justify-between overflow-hidden relative">
+                  <Card className="h-full border-white/5 bg-card/25 backdrop-blur-md hover:border-primary/25 hover:bg-card/45 hover:shadow-[0_0_15px_rgba(251,191,36,0.05)] transition-all duration-300 flex flex-col justify-between overflow-hidden relative rounded-none">
                     {/* Glowing highlight in corner on hover */}
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors" />
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/2 rounded-full blur-xl group-hover:bg-primary/5 transition-all pointer-events-none" />
 
                     <CardHeader>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="p-2 bg-primary/5 rounded-lg text-primary group-hover:bg-primary/15 transition-colors">
-                          <Folder className="size-5" />
+                        <span className="p-2 bg-primary/5 rounded-lg text-primary group-hover:bg-primary/10 transition-colors">
+                          <Folder className="size-4 animate-pulse" />
                         </span>
                         {project.githubRepoName && (
-                          <span className="text-xs font-mono bg-accent/20 px-2 py-1 rounded text-muted-foreground flex items-center gap-1">
-                            <GitBranch className="size-3" />
+                          <span className="text-[10px] font-mono bg-white/5 px-2.5 py-1 rounded-full text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
+                            <GitBranch className="size-3 text-primary" />
                             {project.githubRepoName}
                           </span>
                         )}
                       </div>
-                      <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors truncate">
+                      <CardTitle className="text-base font-bold group-hover:text-primary transition-colors truncate font-mono uppercase tracking-wide">
                         {project.name}
                       </CardTitle>
-                      <CardDescription className="line-clamp-2 min-h-10 mt-1">
+                      <CardDescription className="line-clamp-2 min-h-10 mt-1 text-xs/relaxed text-muted-foreground">
                         {project.description || "No project description provided."}
                       </CardDescription>
                     </CardHeader>
-                    <CardFooter className="border-t border-accent/10 bg-accent/5 py-3 px-6 flex justify-between items-center text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                    <CardFooter className="border-t border-white/5 bg-white/[0.02] py-2 px-6 flex justify-between items-center text-[10px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-all duration-300">
                       <span>View details</span>
-                      <ArrowRight className="size-4 transform group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="size-3.5 transform group-hover:translate-x-1 transition-transform" />
                     </CardFooter>
                   </Card>
                 </Link>

@@ -45,7 +45,7 @@ export function DashboardSidebar({ user, plan = "Pro" }: DashboardSidebarProps) 
                 />
               </span>
               <span className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-medium">ShipMate</span>
+                <span className="truncate font-mono text-xs uppercase tracking-widest font-bold text-primary text-glow-amber">ShipMate</span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

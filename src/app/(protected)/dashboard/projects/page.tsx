@@ -167,7 +167,7 @@ export default function ProjectsOverviewPage() {
               <form onSubmit={handleCreateProject} className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="proj-workspace">Target Workspace</Label>
-                  <Select value={targetWorkspaceId} onValueChange={setTargetWorkspaceId}>
+                  <Select value={targetWorkspaceId} onValueChange={(val) => setTargetWorkspaceId(val ?? "")}>
                     <SelectTrigger id="proj-workspace">
                       <SelectValue placeholder="Select Workspace" />
                     </SelectTrigger>
@@ -285,7 +285,7 @@ export default function ProjectsOverviewPage() {
           />
         </div>
         <div className="w-full sm:w-[220px]">
-          <Select value={selectedWorkspaceFilter} onValueChange={setSelectedWorkspaceFilter}>
+          <Select value={selectedWorkspaceFilter} onValueChange={(val) => setSelectedWorkspaceFilter(val ?? "")}>
             <SelectTrigger className="bg-card/30 border-accent/15 h-11 text-sm shadow-xs">
               <SelectValue placeholder="All Workspaces" />
             </SelectTrigger>
@@ -348,13 +348,13 @@ export default function ProjectsOverviewPage() {
               </CardContent>
 
               <CardFooter className="pt-4 border-t border-accent/5 mt-4 flex gap-2 justify-between">
-                <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm"  className="text-xs text-muted-foreground hover:text-foreground">
                   <Link href={`/dashboard/projects/${p.id}/kanban`}>
                     <Kanban className="size-3.5 mr-1" /> Kanban
                   </Link>
                 </Button>
                 
-                <Button size="sm" asChild className="gap-1.5 text-xs shadow-xs">
+                <Button size="sm"  className="gap-1.5 text-xs shadow-xs">
                   <Link href={`/dashboard/projects/${p.id}`}>
                     Configure <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
                   </Link>

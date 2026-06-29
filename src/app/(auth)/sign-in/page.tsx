@@ -30,7 +30,8 @@ type SignInPageProps = {
 const SignInPage = async ({ searchParams }: SignInPageProps) => {
   const { callbackUrl } = await searchParams;
   return (
-    <Card className="border-border/80 shadow-sm">
+    <Card className="border-white/5 bg-card/25 backdrop-blur-md relative overflow-hidden shadow-2xl">
+      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       <CardHeader className="items-center text-center">
         <div className="mb-6 flex justify-center pt-2">
           <Image

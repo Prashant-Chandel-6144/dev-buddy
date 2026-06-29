@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { BackgroundGrid } from "@/components/ui/background-grid";
 
 interface Project {
   id: string;
@@ -60,10 +61,10 @@ interface FeatureRequest {
 }
 
 const COLUMNS = [
-  { id: "TODO", label: "To Do", bg: "bg-slate-500/5", border: "border-slate-500/15", text: "text-slate-500", icon: Circle },
-  { id: "IN_PROGRESS", label: "In Progress", bg: "bg-blue-500/5", border: "border-blue-500/15", text: "text-blue-500", icon: Loader2 },
-  { id: "IN_REVIEW", label: "In Review", bg: "bg-amber-500/5", border: "border-amber-500/15", text: "text-amber-500", icon: HelpCircle },
-  { id: "DONE", label: "Done", bg: "bg-emerald-500/5", border: "border-emerald-500/15", text: "text-emerald-500", icon: CheckCircle2 },
+  { id: "TODO", label: "To Do", bg: "bg-white/[0.02]", border: "border-white/5", text: "text-muted-foreground", icon: Circle },
+  { id: "IN_PROGRESS", label: "In Progress", bg: "bg-primary/5", border: "border-primary/20", text: "text-primary", icon: Loader2 },
+  { id: "IN_REVIEW", label: "In Review", bg: "bg-orange-500/5", border: "border-orange-500/20", text: "text-orange-500", icon: HelpCircle },
+  { id: "DONE", label: "Done", bg: "bg-green-500/5", border: "border-green-500/20", text: "text-green-500", icon: CheckCircle2 },
 ] as const;
 
 export default function KanbanPage() {
@@ -275,7 +276,7 @@ export default function KanbanPage() {
     return (
       <div className="flex-1 p-10 text-center space-y-6">
         <h2 className="text-2xl font-bold">Project not found</h2>
-        <Button asChild>
+        <Button >
           <Link href="/dashboard">Back to Dashboard</Link>
         </Button>
       </div>
@@ -286,11 +287,13 @@ export default function KanbanPage() {
   const featuresWithPrds = features.filter(f => f.prd);
 
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-8 bg-gradient-to-br from-background via-background to-accent/5 min-h-screen">
+    <div className="relative flex-1 p-6 md:p-10 space-y-8 bg-background min-h-screen">
+      <BackgroundGrid className="fixed inset-0 pointer-events-none opacity-40" />
+
       {/* Back Button */}
-      <Button variant="ghost" asChild className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
+      <Button variant="ghost"  className="gap-2 -ml-2 text-muted-foreground hover:text-foreground font-mono uppercase tracking-wider text-xs">
         <Link href={`/dashboard/projects/${projectId}`}>
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-3.5" />
           Back to Project details
         </Link>
       </Button>
@@ -298,12 +301,12 @@ export default function KanbanPage() {
       {/* Kanban Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <span className="text-xs font-semibold text-primary uppercase tracking-wider">Project Workspace</span>
-          <h1 className="text-3xl font-extrabold tracking-tight mt-1 flex items-center gap-2">
-            <LayoutGrid className="size-7 text-primary" />
-            {project.name} Kanban Board
+          <span className="text-xs font-semibold text-primary uppercase tracking-wider font-mono">Project Workspace</span>
+          <h1 className="text-2xl font-light uppercase tracking-widest font-mono text-white flex items-center gap-2 mt-1 text-glow">
+            <LayoutGrid className="size-5 text-primary animate-pulse" />
+            {project.name} Kanban
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-1">
             Track and manage technical tasks generated under each feature's PRD specifications.
           </p>
         </div>
@@ -312,28 +315,28 @@ export default function KanbanPage() {
         {featuresWithPrds.length > 0 && (
           <Dialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
             <DialogTrigger render={
-              <Button className="gap-2 bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/20">
+              <Button className="gap-2 bg-primary hover:bg-primary/95 text-primary-foreground font-mono uppercase tracking-wider text-xs glow-amber">
                 <Plus className="size-4" />
                 Add Task
               </Button>
             } />
-            <DialogContent className="sm:max-w-[450px]">
+            <DialogContent className="sm:max-w-[450px] bg-card/95 border-white/5 backdrop-blur-md rounded-none font-mono text-xs">
               <DialogHeader>
-                <DialogTitle>Create Project Task</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="uppercase tracking-wider text-white">Create Project Task</DialogTitle>
+                <DialogDescription className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   Add a new actionable item under a feature's requirements.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateTask} className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="task-feature">Target Feature Request</Label>
-                  <Select value={selectedFeatureId} onValueChange={setSelectedFeatureId} required>
-                    <SelectTrigger id="task-feature">
+                  <Label htmlFor="task-feature" className="uppercase tracking-wider">Target Feature Request</Label>
+                  <Select value={selectedFeatureId} onValueChange={(val) => setSelectedFeatureId(val ?? "")} required>
+                    <SelectTrigger id="task-feature" className="bg-card/35 border-white/5 rounded-full px-4 text-xs uppercase tracking-wider text-muted-foreground">
                       <SelectValue placeholder="Select Feature Request" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-card/90 border-white/5 backdrop-blur-md">
                       {featuresWithPrds.map(f => (
-                        <SelectItem key={f.id} value={f.id}>
+                        <SelectItem key={f.id} value={f.id} className="text-xs uppercase tracking-wider font-mono">
                           {f.title}
                         </SelectItem>
                       ))}
@@ -341,27 +344,29 @@ export default function KanbanPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="task-title">Task Title</Label>
+                  <Label htmlFor="task-title" className="uppercase tracking-wider">Task Title</Label>
                   <Input
                     id="task-title"
                     value={taskTitle}
                     onChange={(e) => setTaskTitle(e.target.value)}
                     placeholder="e.g. Set up API endpoints"
                     required
+                    className="bg-card/35 border-white/5 text-white rounded-full px-4"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="task-desc">Description</Label>
+                  <Label htmlFor="task-desc" className="uppercase tracking-wider">Description</Label>
                   <Textarea
                     id="task-desc"
                     value={taskDesc}
                     onChange={(e) => setTaskDesc(e.target.value)}
                     placeholder="Provide details or constraints for this task..."
                     rows={3}
+                    className="bg-card/35 border-white/5 text-white rounded-none p-3"
                   />
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={isSubmittingTask}>
+                  <Button type="submit" disabled={isSubmittingTask} className="uppercase tracking-wider text-xs">
                     {isSubmittingTask ? "Adding..." : "Add Task"}
                   </Button>
                 </DialogFooter>
@@ -373,18 +378,16 @@ export default function KanbanPage() {
 
       {featuresWithPrds.length === 0 ? (
         /* Empty State (No approved PRDs yet) */
-        <Card className="border-dashed border-accent/40 bg-card/30 backdrop-blur-sm max-w-2xl mx-auto text-center py-16 px-6">
+        <Card className="border-dashed border-white/10 bg-card/20 py-16 text-center max-w-xl mx-auto rounded-none">
           <CardHeader className="flex flex-col items-center">
-            <div className="p-4 bg-primary/10 rounded-full text-primary mb-4">
-              <ClipboardList className="size-10" />
-            </div>
-            <CardTitle className="text-xl font-bold">No Approved PRDs Found</CardTitle>
-            <CardDescription className="max-w-md mt-2">
+            <ClipboardList className="size-8 text-muted-foreground mb-2" />
+            <CardTitle className="text-base font-mono uppercase tracking-wider">No Approved PRDs Found</CardTitle>
+            <CardDescription className="text-xs uppercase tracking-wider max-w-md mt-1">
               Tasks can only be tracked for feature requests that have an approved and saved PRD. Please create and approve a PRD first.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild>
+            <Button  className="font-mono text-xs uppercase tracking-wider">
               <Link href={`/dashboard/projects/${projectId}`}>
                 Go to Feature Requests
               </Link>
@@ -405,19 +408,19 @@ export default function KanbanPage() {
                 onDragEnter={(e) => handleDragEnter(e, col.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className={`rounded-xl border transition-all duration-200 ${
+                className={`rounded-none border transition-all duration-200 ${
                   draggedOverCol === col.id
-                    ? "border-dashed border-primary bg-primary/10 scale-[1.01]"
+                    ? "border-dashed border-primary bg-primary/5 scale-[1.01]"
                     : `${col.border} ${col.bg}`
                 } p-4 flex flex-col min-h-[500px] max-h-[800px] overflow-y-auto space-y-4`}
               >
                 {/* Column Title Header */}
-                <div className="flex justify-between items-center pb-2 border-b border-accent/10">
-                  <div className="flex items-center gap-2 font-bold text-sm">
-                    <ColumnIcon className={`size-4 ${col.text}`} />
-                    <span>{col.label}</span>
+                <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                  <div className="flex items-center gap-2 font-mono uppercase tracking-wider text-xs">
+                    <ColumnIcon className={`size-3.5 ${col.text} ${col.id === "IN_PROGRESS" ? "animate-spin" : "animate-pulse"}`} />
+                    <span className="text-white font-bold">{col.label}</span>
                   </div>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-[10px] bg-white/5 border border-white/5 text-muted-foreground uppercase px-2 rounded-full">
                     {columnTasks.length}
                   </Badge>
                 </div>
@@ -425,8 +428,8 @@ export default function KanbanPage() {
                 {/* Tasks List */}
                 <div className="space-y-3 flex-1 overflow-y-auto">
                   {columnTasks.length === 0 ? (
-                    <div className="text-xs text-muted-foreground text-center py-10 italic">
-                      Empty column
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60 text-center py-10 italic">
+                      Empty registry
                     </div>
                   ) : (
                     columnTasks.map((task) => (
@@ -434,28 +437,28 @@ export default function KanbanPage() {
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task)}
-                        className="border-accent/10 bg-card hover:border-primary/20 shadow-xs relative group/card transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md"
+                        className="border-white/5 bg-card/30 backdrop-blur-md hover:border-primary/20 hover:shadow-[0_0_10px_rgba(251,191,36,0.03)] relative group/card transition-all duration-200 cursor-grab active:cursor-grabbing rounded-none"
                       >
                         <CardHeader className="p-3 pb-1 space-y-1">
-                          <Badge variant="outline" className="text-[10px] uppercase font-semibold text-muted-foreground w-fit truncate max-w-full">
+                          <Badge variant="outline" className="text-[9px] uppercase font-mono text-muted-foreground/80 w-fit truncate max-w-full rounded-full border-white/5 bg-white/[0.01]">
                             {task.featureRequest.title}
                           </Badge>
-                          <CardTitle className="text-sm font-bold leading-snug">
+                          <CardTitle className="text-xs font-bold leading-snug font-mono uppercase tracking-wider text-white group-hover/card:text-primary transition-colors">
                             {task.title}
                           </CardTitle>
                         </CardHeader>
                         {task.description && (
-                          <CardContent className="p-3 pt-0 text-xs text-muted-foreground line-clamp-2">
+                          <CardContent className="p-3 pt-0 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                             {task.description}
                           </CardContent>
                         )}
-                        <CardFooter className="p-2 pt-0 border-t border-accent/5 mt-2 flex justify-between items-center">
+                        <CardFooter className="p-2 pt-0 border-t border-white/5 mt-2 flex justify-between items-center text-[10px] font-mono">
                           {/* Task Action Buttons */}
                           <div className="flex gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="size-6 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
                               onClick={() => handleDeleteTask(task)}
                               title="Delete Task"
                             >
@@ -473,7 +476,7 @@ export default function KanbanPage() {
                                   key={c.id}
                                   variant="ghost"
                                   size="icon"
-                                  className="size-6 hover:bg-accent"
+                                  className="size-6 hover:bg-white/5 rounded-full"
                                   onClick={() => handleMoveTask(task, c.id)}
                                   title={`Move to ${c.label}`}
                                 >

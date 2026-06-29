@@ -87,9 +87,13 @@ export function DashboardNav() {
                     isActive={active}
                     tooltip={item.title}
                     render={<Link href={item.href} />}
+                    className={active ? "font-mono font-bold uppercase tracking-wider text-primary bg-primary/5" : ""}
                   >
-                    <Icon />
+                    <Icon className={active ? "text-primary animate-pulse" : ""} />
                     <span>{item.title}</span>
+                    {active && (
+                      <span className="size-1.5 rounded-full bg-primary glow-amber animate-pulse shrink-0 ml-auto" />
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
@@ -100,7 +104,7 @@ export function DashboardNav() {
 
       {/* Projects Sidebar Section */}
       <SidebarGroup className="mt-2">
-        <SidebarGroupLabel className="flex justify-between items-center">
+        <SidebarGroupLabel className="flex justify-between items-center font-mono uppercase text-[10px] tracking-wider text-muted-foreground/85">
           <span>Projects</span>
           {loading && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
         </SidebarGroupLabel>
@@ -124,9 +128,13 @@ export function DashboardNav() {
                       isActive={active && pathname !== `${projectHref}/kanban`}
                       tooltip={project.name}
                       render={<Link href={projectHref} />}
+                      className={active && pathname !== `${projectHref}/kanban` ? "font-mono font-bold uppercase tracking-wider text-primary bg-primary/5" : ""}
                     >
-                      <Icon className="text-primary/75" />
+                      <Icon className={active && pathname !== `${projectHref}/kanban` ? "text-primary animate-pulse" : "text-primary/75"} />
                       <span className="truncate">{project.name}</span>
+                      {active && pathname !== `${projectHref}/kanban` && (
+                        <span className="size-1.5 rounded-full bg-primary glow-amber animate-pulse shrink-0 ml-auto" />
+                      )}
                     </SidebarMenuButton>
                     
                     {active && (
@@ -135,8 +143,12 @@ export function DashboardNav() {
                           <SidebarMenuSubButton
                             isActive={pathname === projectHref}
                             render={<Link href={projectHref} />}
+                            className={pathname === projectHref ? "font-mono font-bold text-primary bg-primary/5" : ""}
                           >
                             <span>Feature Requests</span>
+                            {pathname === projectHref && (
+                              <span className="size-1 rounded-full bg-primary glow-amber animate-pulse shrink-0 ml-auto" />
+                            )}
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         
@@ -144,8 +156,12 @@ export function DashboardNav() {
                           <SidebarMenuSubButton
                             isActive={pathname === `${projectHref}/kanban`}
                             render={<Link href={`${projectHref}/kanban`} />}
+                            className={pathname === `${projectHref}/kanban` ? "font-mono font-bold text-primary bg-primary/5" : ""}
                           >
                             <span>Kanban Board</span>
+                            {pathname === `${projectHref}/kanban` && (
+                              <span className="size-1 rounded-full bg-primary glow-amber animate-pulse shrink-0 ml-auto" />
+                            )}
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>

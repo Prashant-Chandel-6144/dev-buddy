@@ -293,7 +293,7 @@ export default function GlobalKanbanPage() {
           {projects.length > 0 && (
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Label htmlFor="global-project-select" className="text-xs text-muted-foreground shrink-0 uppercase font-semibold">Project:</Label>
-              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+              <Select value={selectedProjectId} onValueChange={(val) => setSelectedProjectId(val ?? "")}>
                 <SelectTrigger id="global-project-select" className="w-[200px] bg-card border-accent/20">
                   <SelectValue placeholder="Select Project" />
                 </SelectTrigger>
@@ -326,7 +326,7 @@ export default function GlobalKanbanPage() {
                 <form onSubmit={handleCreateTask} className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="task-feature">Target Feature (Approved PRD)</Label>
-                    <Select value={selectedFeatureId} onValueChange={setSelectedFeatureId}>
+                    <Select value={selectedFeatureId} onValueChange={(val) => setSelectedFeatureId(val ?? "")}>
                       <SelectTrigger id="task-feature">
                         <SelectValue placeholder="Select Feature Request" />
                       </SelectTrigger>
@@ -401,7 +401,7 @@ export default function GlobalKanbanPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-4">
-            <Button asChild>
+            <Button >
               <Link href={`/dashboard/projects/${selectedProjectId}`}>
                 Go to Feature Requests
               </Link>
