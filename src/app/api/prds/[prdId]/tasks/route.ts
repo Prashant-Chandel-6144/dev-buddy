@@ -17,10 +17,17 @@ export async function GET(request: Request, { params }: { params: { prdId: strin
         const { prdId } = await params;
         console.log("Fetching tasks for PRD ID:", prdId);
         
-        // Find the PRD to get the associated featureRequestId
-        const prd = await prisma.pRD.findUnique({
+        // Find the PRD with project ownership check
+        const prd = await prisma.pRD.findFirst({
             where: {
-                id: prdId
+                id: prdId,
+                featureRequest: {
+                    project: {
+                        workspace: {
+                            userId: session.user.id
+                        }
+                    }
+                }
             }
         });
 
@@ -70,10 +77,17 @@ export async function POST(request: Request, { params }: { params: { prdId: stri
         const { prdId } = await params;
         console.log("Creating task for PRD ID:", prdId);
 
-        // Find the PRD to get the associated featureRequestId
-        const prd = await prisma.pRD.findUnique({
+        // Find the PRD with project ownership check
+        const prd = await prisma.pRD.findFirst({
             where: {
-                id: prdId
+                id: prdId,
+                featureRequest: {
+                    project: {
+                        workspace: {
+                            userId: session.user.id
+                        }
+                    }
+                }
             }
         });
 
@@ -117,6 +131,16 @@ export async function POST(request: Request, { params }: { params: { prdId: stri
                 message: "Task created successfully",
                 task: manualTask
             }, { status: 201 });
+        }
+
+        // AI Generation Route: Check AI Credits
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id }
+        });
+        
+        const credits = (user as any)?.aiCredits ?? 10;
+        if (credits <= 0) {
+          return NextResponse.json({ error: "Insufficient AI Credits. Please upgrade your plan." }, { status: 403 });
         }
 
         const prompt = `
@@ -215,6 +239,16 @@ Return ONLY valid JSON in this exact format:
     await prisma.featureRequest.update({
       where: { id: prd.featureRequestId },
       data: { status: "TASKS_CREATED" },
+    });
+
+    // Deduct 1 AI Credit for AI Task Generation
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        aiCredits: {
+          decrement: 1
+        }
+      } as any
     });
 
     return NextResponse.json(

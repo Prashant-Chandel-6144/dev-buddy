@@ -76,12 +76,39 @@ export const reviewPullRequest = inngest.createFunction(
           namespace,
           pullRequest.title
         );
+
+        // Fetch PRD and Tasks context if this PR is linked to a feature request
+        let prdContext = undefined;
+        let tasksContext = undefined;
+        if ((pullRequest as any).featureRequestId) {
+          const feature = await prisma.featureRequest.findUnique({
+            where: { id: (pullRequest as any).featureRequestId },
+            include: {
+              prd: true,
+              tasks: true,
+            }
+          });
+          
+          if (feature?.prd) {
+            prdContext = {
+              problemStatement: feature.prd.problemStatement,
+              goals: feature.prd.goals,
+              userStories: (feature.prd as any).userStories || [],
+              acceptanceCriteria: feature.prd.acceptanceCriteria,
+            };
+          }
+          if (feature?.tasks) {
+            tasksContext = feature.tasks.map(t => ({ title: t.title, status: t.status, description: t.description }));
+          }
+        }
   
         return generateReview({
           repoFullName: pullRequest.repoFullName,
           title: pullRequest.title,
           contextSnippets,
           repoContextSnippets,
+          prdContext,
+          tasksContext,
         });
       });
   
@@ -102,6 +129,13 @@ export const reviewPullRequest = inngest.createFunction(
             reviewComment: review,
             reviewedAt: new Date(),
           },
+        });
+      });
+
+      await step.run("trigger-verification-agent", async () => {
+        await inngest.send({
+          name: "github/pr.reviewed",
+          data: { pullRequestId },
         });
       });
   

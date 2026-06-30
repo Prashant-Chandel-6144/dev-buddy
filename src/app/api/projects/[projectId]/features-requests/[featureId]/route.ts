@@ -47,7 +47,16 @@ export async function GET(
         tasks: { orderBy: { order: "asc" } },
         project: { select: { id: true, name: true } },
       },
-    });
+    }) as any;
+
+    if (features) {
+      const pullRequests = await prisma.$queryRawUnsafe<any[]>(
+        `SELECT * FROM "pull_request" WHERE "featureRequestId" = $1 ORDER BY "createdAt" DESC`,
+        featureId
+      );
+      features.pullRequests = pullRequests;
+    }
+
     return Response.json(features, { status: 200 });
   } catch (error) {
     console.error(error);

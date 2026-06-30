@@ -12,15 +12,19 @@ export async function saveChunksToPinecone(
     chunks: CodeChunk[]
 ) {
     const index = getPineconeIndex();
+    const BATCH_SIZE = 80;
 
-    const records = chunks.map((chunk) => ({
-        id: chunk.id,
-        text: chunk.text,
-        filePath: chunk.filePath,
-    }));
+    for (let start = 0; start < chunks.length; start += BATCH_SIZE) {
+        const batch = chunks.slice(start, start + BATCH_SIZE);
+        const records = batch.map((chunk) => ({
+            id: chunk.id,
+            text: chunk.text,
+            filePath: chunk.filePath,
+        }));
 
-    // namespace() scopes vectors so this PR never mixes with repo-wide sync data
-    await index.namespace(namespace).upsertRecords({ records });
+        // namespace() scopes vectors so this PR never mixes with repo-wide sync data
+        await index.namespace(namespace).upsertRecords({ records });
+    }
 }
 
 

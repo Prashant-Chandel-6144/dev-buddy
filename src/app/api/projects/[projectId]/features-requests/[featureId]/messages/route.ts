@@ -135,7 +135,15 @@ export async function POST(request:Request,{params}:{params:{featureId:string,pr
       content: m.content
     }));
 
-    // 3. Initialize OpenAI and prompt it to update the PRD based on history
+    // 3. Check AI Credits before calling OpenAI
+    const user = await prisma.user.findUnique({
+      where: { id: userIdWithSession }
+    });
+    const credits = (user as any)?.aiCredits ?? 10;
+    if (credits <= 0) {
+      return Response.json({ error: "Insufficient AI Credits. Please upgrade your plan." }, { status: 403 });
+    }
+
     const openai = getOpenAIClient();
 
     const systemPrompt = `You are a principal product manager. You are updating an existing PRD (Product Requirements Document) based on user follow-up questions/instructions.
@@ -145,6 +153,10 @@ Below is the current state of the PRD:
 ${existingPrd.goals.map(g => `- ${g}`).join("\n")}
 - Non-Goals:
 ${existingPrd.nonGoals.map(ng => `- ${ng}`).join("\n")}
+- User Stories:
+${(existingPrd as any).userStories?.map((us: string) => `- ${us}`).join("\n") || ""}
+- Success Metrics:
+${(existingPrd as any).successMetrics?.map((sm: string) => `- ${sm}`).join("\n") || ""}
 - Acceptance Criteria:
 ${existingPrd.acceptanceCriteria.map(ac => `- ${ac}`).join("\n")}
 - Implementation Approach:
@@ -159,6 +171,8 @@ Required Schema:
   "edgeCases": "Refined edge cases markdown",
   "goals": ["goal 1", "goal 2"],
   "nonGoals": ["non-goal 1"],
+  "userStories": ["As a [role], I want [action] so that [benefit]"],
+  "successMetrics": ["metric 1"],
   "acceptanceCriteria": ["criterion 1"],
   "implementationApproach": ["approach 1"],
   "content": "Refined detailed PRD markdown content"
@@ -195,10 +209,12 @@ Required Schema:
         edgeCases: validated.data.edgeCases,
         goals: validated.data.goals,
         nonGoals: validated.data.nonGoals,
+        userStories: validated.data.userStories,
+        successMetrics: validated.data.successMetrics,
         acceptanceCriteria: validated.data.acceptanceCriteria,
         implementationApproach: validated.data.implementationApproach,
         content: validated.data.content,
-      }
+      } as any
     });
 
     // 5. Write the assistant confirmation message to DB
@@ -208,6 +224,16 @@ Required Schema:
         content: `I've successfully updated the PRD based on your instructions. Let me know if you need any other modifications!`,
         featureRequestId: featureId,
       }
+    });
+
+    // Deduct 1 AI Credit for Chat refinement
+    await prisma.user.update({
+      where: { id: userIdWithSession },
+      data: {
+        aiCredits: {
+          decrement: 1
+        }
+      } as any
     });
 
     return Response.json({

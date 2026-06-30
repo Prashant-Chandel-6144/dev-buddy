@@ -24,6 +24,11 @@ export const featureStatusEnum = z.enum([
   "APPROVED",
   "SHIPPED",
   "REJECTED",
+  "DRAFT",
+  "PLANNING",
+  "IN_DEVELOPMENT",
+  "CHANGES_REQUIRED",
+  "READY_FOR_MERGE"
 ])
 export type FeatureStatus = z.infer<typeof featureStatusEnum>
 

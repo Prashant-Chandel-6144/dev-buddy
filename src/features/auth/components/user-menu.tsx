@@ -34,6 +34,7 @@ type UserMenuProps = {
   /** `compact` — avatar-only trigger; `profile` — avatar + name in the trigger. */
   variant?: UserMenuTriggerVariant;
   plan?: string;
+  aiCredits?: number;
   className?: string;
 };
 
@@ -74,6 +75,7 @@ export function UserMenu({
   user,
   variant = "profile",
   plan = DEFAULT_PLAN,
+  aiCredits,
   className,
 }: UserMenuProps) {
   const router = useRouter();
@@ -126,9 +128,16 @@ export function UserMenu({
                     {user.email}
                   </p>
                 ) : null}
-                <Badge variant="secondary" className="w-fit">
-                  {plan} plan
-                </Badge>
+                <div className="flex gap-2 items-center">
+                  <Badge variant="secondary" className="w-fit">
+                    {plan} plan
+                  </Badge>
+                  {aiCredits !== undefined && (
+                    <Badge variant="outline" className="w-fit border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
+                      {aiCredits} AI Credits
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </DropdownMenuLabel>

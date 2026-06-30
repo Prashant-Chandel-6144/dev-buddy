@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -24,6 +24,7 @@ model User {
   emailVerified          Boolean             @default(false)
   image                  String?
   plan                   String              @default("free") //free | pro
+  aiCredits              Int                 @default(50)
   razorpaySubscriptionId String?
   subscriptionStatus     String? //active | cancelled | trailing
   subscriptionRenewsAt   DateTime?
@@ -69,6 +70,7 @@ model PullRequest {
   featureRequest   FeatureRequest? @relation(fields: [featureRequestId], references: [id], onDelete: SetNull)
 
   @@unique([repoFullName, prNumber])
+  @@index([featureRequestId])
   @@map("pull_request")
 }
 
@@ -162,6 +164,7 @@ model Project {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
+  @@index([workspaceId])
   @@map("project")
 }
 
@@ -176,10 +179,12 @@ model FeatureRequest {
   messages    Message[]
   tasks       Task[]
   pullRequests PullRequest[]
+  releaseHistories ReleaseHistory[]
   source      String   @default("MANUAL") //EMAIL | TICKET | CALL | MANUAL | AGENT
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([projectId])
   @@map("feature_request")
 }
 
@@ -191,6 +196,7 @@ model Message {
   content          String
   createdAt        DateTime       @default(now())
 
+  @@index([featureRequestId])
   @@map("message")
 }
 
@@ -202,6 +208,8 @@ model PRD {
   edgeCases String
   goals String[]
   nonGoals String[]
+  userStories String[]
+  successMetrics String[]
   acceptanceCriteria String[]
   implementationApproach String[]
   content          String         // Markdown content
@@ -223,5 +231,22 @@ model Task {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
+  @@index([featureRequestId])
   @@map("task")
+}
+
+model ReleaseHistory {
+  id                  String         @id @default(cuid())
+  featureRequestId    String
+  featureRequest      FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+  prNumber            Int
+  commitSha           String
+  mergedBy            String
+  completionPercentage Int
+  verificationResult  String?        // Store status like READY_FOR_MERGE
+  releaseNotes        String?
+  releasedAt          DateTime       @default(now())
+
+  @@index([featureRequestId])
+  @@map("release_history")
 }

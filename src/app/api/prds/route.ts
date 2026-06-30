@@ -93,6 +93,16 @@ export async function POST(request: Request) {
     if (action === "generate") {
       let client;
       try {
+        // Check AI Credits
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id }
+        });
+        
+        const credits = (user as any)?.aiCredits ?? 10;
+        if (credits <= 0) {
+          return NextResponse.json({ error: "Insufficient AI Credits. Please upgrade your plan." }, { status: 403 });
+        }
+
         client = getOpenAIClient();
       } catch (err) {
         return NextResponse.json(
@@ -120,12 +130,13 @@ Description: ${feature.description}
 
 Return ONLY JSON in this exact format:
 {
-  "problemStatement": "A detailed problem statement (at least 10 characters) explaining why we need this feature and what pain points it addresses",
-  "edgeCases": "Detailed description in markdown of edge cases, error states, constraints, and how they should be handled",
-  "goals": ["goal 1", "goal 2", "goal 3"],
+  "problemStatement": "clear statement of the problem being solved",
+  "goals": ["goal 1", "goal 2"],
   "nonGoals": ["non-goal 1", "non-goal 2"],
-  "acceptanceCriteria": ["criterion 1", "criterion 2", "criterion 3"],
-  "implementationApproach": ["approach item 1", "approach item 2"],
+  "userStories": ["As a [role], I want [action] so that [benefit]"],
+  "successMetrics": ["metric 1", "metric 2"],
+  "acceptanceCriteria": ["Given ..., When ..., Then ..."],
+  "implementationApproach": ["step 1", "step 2"],
   "content": "Detailed PRD content in markdown including user stories, feature specifications, metrics, and timeline"
 }`,
           },
@@ -158,6 +169,16 @@ Return ONLY JSON in this exact format:
           { status: 500 }
         );
       }
+
+      // Deduct 1 AI Credit
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          aiCredits: {
+            decrement: 1
+          }
+        } as any
+      });
 
       return NextResponse.json(
         {
@@ -194,11 +215,13 @@ Return ONLY JSON in this exact format:
             edgeCases: parsed.data.edgeCases,
             goals: parsed.data.goals,
             nonGoals: parsed.data.nonGoals,
+            userStories: parsed.data.userStories,
+            successMetrics: parsed.data.successMetrics,
             acceptanceCriteria: parsed.data.acceptanceCriteria,
             implementationApproach: parsed.data.implementationApproach,
             content: parsed.data.content,
             status: parsed.data.status || "approved",
-          },
+          } as any,
         });
       } else {
         savedPRD = await prisma.pRD.create({
@@ -208,11 +231,13 @@ Return ONLY JSON in this exact format:
             edgeCases: parsed.data.edgeCases,
             goals: parsed.data.goals,
             nonGoals: parsed.data.nonGoals,
+            userStories: parsed.data.userStories,
+            successMetrics: parsed.data.successMetrics,
             acceptanceCriteria: parsed.data.acceptanceCriteria,
             implementationApproach: parsed.data.implementationApproach,
             content: parsed.data.content,
             status: parsed.data.status || "approved",
-          },
+          } as any,
         });
       }
 
@@ -291,7 +316,11 @@ export async function PATCH(request: Request) {
         ...(parsed.data.problemStatement !== undefined ? { problemStatement: parsed.data.problemStatement } : {}),
         ...(parsed.data.edgeCases !== undefined ? { edgeCases: parsed.data.edgeCases } : {}),
         ...(parsed.data.goals !== undefined ? { goals: parsed.data.goals } : {}),
+        ...(parsed.data.edgeCases !== undefined ? { edgeCases: parsed.data.edgeCases } : {}),
+        ...(parsed.data.goals !== undefined ? { goals: parsed.data.goals } : {}),
         ...(parsed.data.nonGoals !== undefined ? { nonGoals: parsed.data.nonGoals } : {}),
+        ...(parsed.data.userStories !== undefined ? { userStories: parsed.data.userStories } : {}),
+        ...(parsed.data.successMetrics !== undefined ? { successMetrics: parsed.data.successMetrics } : {}),
         ...(parsed.data.acceptanceCriteria !== undefined ? { acceptanceCriteria: parsed.data.acceptanceCriteria } : {}),
         ...(parsed.data.implementationApproach !== undefined ? { implementationApproach: parsed.data.implementationApproach } : {}),
         ...(parsed.data.content !== undefined ? { content: parsed.data.content } : {}),

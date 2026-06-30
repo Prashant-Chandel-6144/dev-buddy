@@ -34,6 +34,14 @@ export async function getPullRequestFiles(
             continue;
         }
 
+        // Performance Optimization: Skip generated package lockfiles and static assets
+        const isLockfile = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb"].some(lock => file.filename.endsWith(lock));
+        const isAsset = [".png", ".jpg", ".jpeg", ".gif", ".pdf", ".svg", ".ico", ".woff", ".woff2", ".ttf"].some(ext => file.filename.endsWith(ext));
+
+        if (isLockfile || isAsset) {
+            continue;
+        }
+
         files.push({ filePath: file.filename, patch: file.patch });
     }
 

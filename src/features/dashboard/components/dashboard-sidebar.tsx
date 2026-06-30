@@ -22,9 +22,10 @@ import { DASHBOARD_ROUTES } from "../lib/route";
 type DashboardSidebarProps = {
   user: UserMenuUser;
   plan?: string;
+  aiCredits?: number;
 };
 
-export function DashboardSidebar({ user, plan = "Pro" }: DashboardSidebarProps) {
+export function DashboardSidebar({ user, plan = "Pro", aiCredits }: DashboardSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -56,7 +57,7 @@ export function DashboardSidebar({ user, plan = "Pro" }: DashboardSidebarProps) 
       </SidebarContent>
       <SidebarFooter>
         <SidebarSeparator />
-        <SidebarUserButton user={user} plan={plan} />
+        <SidebarUserButton user={user} plan={plan} aiCredits={aiCredits} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -118,7 +118,9 @@ export default function KanbanPage() {
 
   const fetchData = async () => {
     try {
-      setIsLoading(true);
+      if (tasks.length === 0) {
+        setIsLoading(true);
+      }
       // Fetch project
       const projectRes = await fetch(`/api/projects/${projectId}`);
       if (!projectRes.ok) throw new Error("Failed to fetch project");

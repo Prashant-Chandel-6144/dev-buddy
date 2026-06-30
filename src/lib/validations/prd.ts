@@ -32,6 +32,12 @@ export const aiPRDResponseSchema = z.object({
   nonGoals: z
     .array(z.string().min(1, "Non-goal cannot be empty"))
     .default([]),
+  userStories: z
+    .array(z.string().min(1, "User story cannot be empty"))
+    .default([]),
+  successMetrics: z
+    .array(z.string().min(1, "Success metric cannot be empty"))
+    .default([]),
   acceptanceCriteria: z
     .array(z.string().min(1, "Acceptance criterion cannot be empty"))
     .default([]),
@@ -58,6 +64,12 @@ export const createPRDSchema = z.object({
   nonGoals: z
     .array(z.string().min(1, "Non-goal cannot be empty"))
     .default([]),
+  userStories: z
+    .array(z.string().min(1, "User story cannot be empty"))
+    .default([]),
+  successMetrics: z
+    .array(z.string().min(1, "Success metric cannot be empty"))
+    .default([]),
   acceptanceCriteria: z
     .array(z.string().min(1, "Acceptance criterion cannot be empty"))
     .default([]),
@@ -78,6 +90,8 @@ export const updatePRDSchema = z.object({
   edgeCases: z.string().min(1).optional(),
   goals: z.array(z.string().min(1)).optional(),
   nonGoals: z.array(z.string().min(1)).optional(),
+  userStories: z.array(z.string().min(1)).optional(),
+  successMetrics: z.array(z.string().min(1)).optional(),
   acceptanceCriteria: z.array(z.string().min(1)).optional(),
   implementationApproach: z.array(z.string().min(1)).optional(),
   content: z.string().min(1).optional(),
@@ -85,4 +99,3 @@ export const updatePRDSchema = z.object({
 })
 
 export type UpdatePRDInput = z.infer<typeof updatePRDSchema>
-

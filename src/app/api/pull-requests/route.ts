@@ -11,7 +11,16 @@ export async function GET() {
         { status: 401 },
       );
     }
+    const installation = await prisma.githubInstallation.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!installation) {
+      return NextResponse.json([], { status: 200 });
+    }
+
     const pullRequests = await prisma.pullRequest.findMany({
+      where: { installationId: installation.installationId },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(pullRequests, { status: 200 });

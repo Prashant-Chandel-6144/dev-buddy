@@ -11,17 +11,19 @@ type DashboardShellProps = {
   children: React.ReactNode;
   user: UserMenuUser;
   plan?: string;
+  aiCredits?: number;
 };
 
 export function DashboardShell({
   children,
   user,
   plan,
+  aiCredits,
 }: DashboardShellProps) {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <DashboardSidebar user={user} plan={plan} />
+        <DashboardSidebar user={user} plan={plan} aiCredits={aiCredits} />
         <SidebarInset className="min-h-svh">{children}</SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

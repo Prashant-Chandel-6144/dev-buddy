@@ -19,31 +19,6 @@ export const DASHBOARD_NAV_ITEMS = [
     icon: "layout-dashboard" as const,
   },
   {
-    title: "Projects",
-    href: DASHBOARD_ROUTES.projects,
-    icon: "folder" as const,
-  },
-  {
-    title: "Repositories",
-    href: DASHBOARD_ROUTES.repos,
-    icon: "git-branch" as const,
-  },
-  {
-    title: "Kanban",
-    href: DASHBOARD_ROUTES.kanban,
-    icon: "layout-dashboard" as const,
-  },
-  {
-    title: "Pull Requests",
-    href: DASHBOARD_ROUTES.pullRequest,
-    icon: "git-pull-request" as const,
-  },
-  {
-    title: "Feature Requests",
-    href: DASHBOARD_ROUTES.featureRequest,
-    icon: "lightbulb" as const,
-  },
-  {
     title: "GitHub App",
     href: DASHBOARD_ROUTES.github,
     icon: "github" as const,

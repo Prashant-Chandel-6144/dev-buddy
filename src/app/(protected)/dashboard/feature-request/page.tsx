@@ -53,6 +53,7 @@ export default function FeatureRequestsOverviewPage() {
       case "SHIPPED":
         return "bg-teal-500/10 text-teal-500 border-teal-500/20";
       case "ANALYZING":
+      case "PENDING_ANALYSIS":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       case "PRD_GENERATED":
         return "bg-purple-500/10 text-purple-500 border-purple-500/20";

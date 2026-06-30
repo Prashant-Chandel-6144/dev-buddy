@@ -1,18 +1,33 @@
+import { getServerSession } from "@/features/auth/actions";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request, { params }: { params: { prdId: string, taskId: string } }) {
     try {
+        const session = await getServerSession()
+            if(!session){
+              return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 },
+              );
+            }
         const { prdId, taskId } = await params;
         console.log("Fetching task for PRD ID:", prdId, "and task ID:", taskId);
-        const task = await prisma.task.findUnique({
+        const task = await prisma.task.findFirst({
             where: {
                 id: taskId,
+                featureRequest: {
+                    project: {
+                        workspace: {
+                            userId: session.user.id
+                        }
+                    }
+                }
             }
         });
         if (!task) {
             return NextResponse.json({
-                message: "Task not found"
+                message: "Task not found or unauthorized"
             }, {
                 status: 404
             });
@@ -36,8 +51,32 @@ export async function GET(request: Request, { params }: { params: { prdId: strin
 
 export async function PATCH(request: Request, { params }: { params: { prdId: string, taskId: string } }) {
     try {
+        const session = await getServerSession()
+    if(!session){
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
         const { prdId, taskId } = await params;
         console.log("Updating task for PRD ID:", prdId, "and task ID:", taskId);
+
+        // Verify task ownership
+        const existing = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                featureRequest: {
+                    project: {
+                        workspace: {
+                            userId: session.user.id
+                        }
+                    }
+                }
+            }
+        });
+        if (!existing) {
+            return NextResponse.json({ message: "Task not found or unauthorized" }, { status: 404 });
+        }
         
         const body = await request.json();
         const { status, title, description } = body;
@@ -80,15 +119,31 @@ export async function PATCH(request: Request, { params }: { params: { prdId: str
 
 export async function DELETE(request: Request, { params }: { params: { prdId: string, taskId: string } }) {
     try {
+        const session = await getServerSession()
+    if(!session){
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
         const { prdId, taskId } = await params;
         console.log("Deleting task for PRD ID:", prdId, "and task ID:", taskId);
         
-        const existingTask = await prisma.task.findUnique({
-            where: { id: taskId }
+        const existingTask = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                featureRequest: {
+                    project: {
+                        workspace: {
+                            userId: session.user.id
+                        }
+                    }
+                }
+            }
         });
         if (!existingTask) {
             return NextResponse.json({
-                message: "Task not found"
+                message: "Task not found or unauthorized"
             }, {
                 status: 404
             });
@@ -114,4 +169,4 @@ export async function DELETE(request: Request, { params }: { params: { prdId: st
             status: 500
         });
     }
-}
+}

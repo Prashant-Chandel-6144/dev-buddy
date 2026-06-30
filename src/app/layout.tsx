@@ -1,29 +1,47 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Oxanium, JetBrains_Mono } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "sonner";
 
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
-
-const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-display" });
-
-const geistSans = Geist({
-  variable: "--font-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "DevBuddy - AI Product Development Platform",
-  description: "Manage workspaces, track projects, and build with AI guidance",
+  title: "ShipFlow AI — The AI Operating System for Product Delivery",
+  description:
+    "ShipFlow AI manages the complete software delivery lifecycle — from feature request to production. AI-powered PRDs, task breakdown, code review, verification, and deployment for engineering teams.",
+  keywords: [
+    "AI product delivery",
+    "software delivery platform",
+    "AI code review",
+    "PRD generator",
+    "engineering automation",
+    "AI deployment",
+  ],
+  openGraph: {
+    title: "ShipFlow AI — The AI Operating System for Product Delivery",
+    description:
+      "From feature request to production in minutes. AI-powered PRDs, task breakdown, code review, and deployment.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -37,9 +55,8 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        geistSans.variable,
-        geistMono.variable,
-        oxanium.variable,
+        inter.variable,
+        spaceGrotesk.variable,
         jetbrainsMono.variable
       )}
       suppressHydrationWarning
@@ -52,7 +69,6 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
-            <ThemeToggle className="absolute top-4 right-4" />
             {children}
             <Toaster />
           </ThemeProvider>

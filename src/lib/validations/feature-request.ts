@@ -30,6 +30,6 @@ export const updateFeatureRequestSchema = z.object({
     .max(5000, "Description must be at most 5000 characters")
     .optional(),
   source: sourceEnum.optional(),
-  status:featureStatusEnum.optional().default("ANALYZING"),
+  status:featureStatusEnum.optional(),
 })
 export type UpdateFeatureRequestInput = z.infer<typeof updateFeatureRequestSchema>

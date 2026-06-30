@@ -23,9 +23,11 @@ import {
   ArrowRight,
   ClipboardList,
   MessageSquare,
-  Send
+  Send,
+  GitPullRequest,
+  Clock
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,6 +42,8 @@ const clientPRDValidationSchema = z.object({
   edgeCases: z.string().min(1, "Edge cases explanation is required"),
   goals: z.array(z.string().min(1, "Goal cannot be empty")).min(1, "At least one goal is required"),
   nonGoals: z.array(z.string().min(1, "Non-goal cannot be empty")).default([]),
+  userStories: z.array(z.string().min(1, "User story cannot be empty")).default([]),
+  successMetrics: z.array(z.string().min(1, "Success metric cannot be empty")).default([]),
   acceptanceCriteria: z.array(z.string().min(1, "Acceptance criterion cannot be empty")).default([]),
   implementationApproach: z.array(z.string().min(1, "Implementation approach item cannot be empty")).default([]),
   content: z.string().min(1, "Detailed specifications content is required"),
@@ -54,6 +58,7 @@ interface FeatureRequest {
   createdAt: string;
   prd?: any;
   tasks?: any[];
+  pullRequests?: any[];
 }
 
 interface PRD {
@@ -62,6 +67,8 @@ interface PRD {
   edgeCases: string;
   goals: string[];
   nonGoals: string[];
+  userStories: string[];
+  successMetrics: string[];
   acceptanceCriteria: string[];
   implementationApproach: string[];
   content: string;
@@ -149,6 +156,8 @@ export default function FeatureDetailPage() {
   const [editEdgeCases, setEditEdgeCases] = useState("");
   const [editGoals, setEditGoals] = useState<string[]>([]);
   const [editNonGoals, setEditNonGoals] = useState<string[]>([]);
+  const [editUserStories, setEditUserStories] = useState<string[]>([]);
+  const [editSuccessMetrics, setEditSuccessMetrics] = useState<string[]>([]);
   const [editAcceptanceCriteria, setEditAcceptanceCriteria] = useState<string[]>([]);
   const [editImplementationApproach, setEditImplementationApproach] = useState<string[]>([]);
   const [editContent, setEditContent] = useState("");
@@ -209,9 +218,11 @@ export default function FeatureDetailPage() {
     "Finalizing document structures and styling specifications..."
   ];
 
-  const fetchFeatureAndPRD = async () => {
+  const fetchFeatureAndPRD = async (isPolling = false) => {
     try {
-      setIsLoading(true);
+      if (!feature && !isPolling) {
+        setIsLoading(true);
+      }
       // Fetch feature request
       const featureRes = await fetch(`/api/projects/${projectId}/features-requests/${featureId}`);
       if (!featureRes.ok) throw new Error("Failed to fetch feature request");
@@ -222,29 +233,39 @@ export default function FeatureDetailPage() {
       if (featureData.prd) {
         setPrd(featureData.prd);
         setIsDraft(false);
-        populateEditFields(featureData.prd);
-      } else {
-        // Try fetching PRD directly just in case
-        const prdRes = await fetch(`/api/prds?featureId=${featureId}`);
-        if (prdRes.ok) {
-          const prdData = await prdRes.json();
-          setPrd(prdData.prd);
-          setIsDraft(false);
-          populateEditFields(prdData.prd);
-        } else {
-          setPrd(null);
+        if (!isEditing) {
+          populateEditFields(featureData.prd);
+        }
+      } else if (!isPolling && !prd) {
+        // Only try the fallback PRD fetch on initial load when we have no local PRD state
+        try {
+          const prdRes = await fetch(`/api/prds?featureId=${featureId}`);
+          if (prdRes.ok) {
+            const prdData = await prdRes.json();
+            setPrd(prdData.prd);
+            setIsDraft(false);
+            if (!isEditing) {
+              populateEditFields(prdData.prd);
+            }
+          }
+        } catch {
+          // Silently ignore fallback PRD fetch failures
         }
       }
 
       // Fetch messages history
-      const messagesRes = await fetch(`/api/projects/${projectId}/features-requests/${featureId}/messages`);
-      if (messagesRes.ok) {
-        const messagesData = await messagesRes.json();
-        setMessages(messagesData);
+      if (!isPolling) {
+        const messagesRes = await fetch(`/api/projects/${projectId}/features-requests/${featureId}/messages`);
+        if (messagesRes.ok) {
+          const messagesData = await messagesRes.json();
+          setMessages(messagesData);
+        }
       }
     } catch (err) {
       console.error(err);
-      toast.error("Could not load feature request details");
+      if (!isPolling) {
+        toast.error("Could not load feature request details");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -255,6 +276,8 @@ export default function FeatureDetailPage() {
     setEditEdgeCases(prdObj.edgeCases || "");
     setEditGoals(prdObj.goals || []);
     setEditNonGoals(prdObj.nonGoals || []);
+    setEditUserStories(prdObj.userStories || []);
+    setEditSuccessMetrics(prdObj.successMetrics || []);
     setEditAcceptanceCriteria(prdObj.acceptanceCriteria || []);
     setEditImplementationApproach(prdObj.implementationApproach || []);
     setEditContent(prdObj.content || "");
@@ -265,6 +288,18 @@ export default function FeatureDetailPage() {
       fetchFeatureAndPRD();
     }
   }, [projectId, featureId]);
+
+  // Real-time polling to sync background task updates automatically
+  useEffect(() => {
+    if (!projectId || !featureId || isEditing || isDraft || isGenerating || isGeneratingTasks) return;
+
+    const interval = setInterval(() => {
+      // Background refetch (lightweight — skips fallback PRD fetch and messages)
+      fetchFeatureAndPRD(true);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [projectId, featureId, isEditing, isDraft, isGenerating, isGeneratingTasks]);
 
   // Simulate AI progress steps during generation
   useEffect(() => {
@@ -282,7 +317,8 @@ export default function FeatureDetailPage() {
   }, [isGenerating]);
 
   // Handle tasks generation by AI
-  const handleGenerateTasks = async () => {
+  const handleGenerateTasks = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!prd || !prd.id) {
       toast.error("Please generate and approve the PRD first!");
       return;
@@ -310,7 +346,8 @@ export default function FeatureDetailPage() {
   };
 
   // Handle PRD Generation (AI)
-  const handleGeneratePRD = async () => {
+  const handleGeneratePRD = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     try {
       setIsGenerating(true);
       const res = await fetch("/api/prds", {
@@ -341,7 +378,8 @@ export default function FeatureDetailPage() {
   };
 
   // Handle Approve & Save to DB
-  const handleApproveAndSave = async () => {
+  const handleApproveAndSave = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!prd) return;
     
     // Assemble the current data (from edit inputs or raw state)
@@ -350,6 +388,8 @@ export default function FeatureDetailPage() {
       edgeCases: editEdgeCases,
       goals: editGoals.filter(g => g.trim() !== ""),
       nonGoals: editNonGoals.filter(ng => ng.trim() !== ""),
+      userStories: editUserStories.filter(us => us.trim() !== ""),
+      successMetrics: editSuccessMetrics.filter(sm => sm.trim() !== ""),
       acceptanceCriteria: editAcceptanceCriteria.filter(c => c.trim() !== ""),
       implementationApproach: editImplementationApproach.filter(a => a.trim() !== ""),
       content: editContent,
@@ -358,7 +398,7 @@ export default function FeatureDetailPage() {
     const validation = clientPRDValidationSchema.safeParse(assembledData);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
-      const firstErrorKey = Object.keys(errors)[0];
+      const firstErrorKey = Object.keys(errors)[0] as keyof typeof errors;
       const firstErrorMsg = errors[firstErrorKey]?.[0] || "Invalid field value";
       toast.error(`Validation Error: ${firstErrorMsg}`);
       return;
@@ -430,7 +470,7 @@ export default function FeatureDetailPage() {
     const validation = clientPRDValidationSchema.safeParse(assembledData);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
-      const firstErrorKey = Object.keys(errors)[0];
+      const firstErrorKey = Object.keys(errors)[0] as keyof typeof errors;
       const firstErrorMsg = errors[firstErrorKey]?.[0] || "Invalid field value";
       toast.error(`Validation Error: ${firstErrorMsg}`);
       return;
@@ -465,7 +505,7 @@ export default function FeatureDetailPage() {
   };
 
   // Helper arrays update functions
-  const handleArrayChange = (idx: number, val: string, arrayType: "goals" | "nonGoals" | "criteria" | "approach") => {
+  const handleArrayChange = (idx: number, val: string, arrayType: "goals" | "nonGoals" | "userStories" | "successMetrics" | "criteria" | "approach") => {
     if (arrayType === "goals") {
       const copy = [...editGoals];
       copy[idx] = val;
@@ -474,6 +514,14 @@ export default function FeatureDetailPage() {
       const copy = [...editNonGoals];
       copy[idx] = val;
       setEditNonGoals(copy);
+    } else if (arrayType === "userStories") {
+      const copy = [...editUserStories];
+      copy[idx] = val;
+      setEditUserStories(copy);
+    } else if (arrayType === "successMetrics") {
+      const copy = [...editSuccessMetrics];
+      copy[idx] = val;
+      setEditSuccessMetrics(copy);
     } else if (arrayType === "criteria") {
       const copy = [...editAcceptanceCriteria];
       copy[idx] = val;
@@ -485,16 +533,20 @@ export default function FeatureDetailPage() {
     }
   };
 
-  const addArrayItem = (arrayType: "goals" | "nonGoals" | "criteria" | "approach") => {
+  const addArrayItem = (arrayType: "goals" | "nonGoals" | "userStories" | "successMetrics" | "criteria" | "approach") => {
     if (arrayType === "goals") setEditGoals([...editGoals, ""]);
     else if (arrayType === "nonGoals") setEditNonGoals([...editNonGoals, ""]);
+    else if (arrayType === "userStories") setEditUserStories([...editUserStories, ""]);
+    else if (arrayType === "successMetrics") setEditSuccessMetrics([...editSuccessMetrics, ""]);
     else if (arrayType === "criteria") setEditAcceptanceCriteria([...editAcceptanceCriteria, ""]);
     else if (arrayType === "approach") setEditImplementationApproach([...editImplementationApproach, ""]);
   };
 
-  const removeArrayItem = (idx: number, arrayType: "goals" | "nonGoals" | "criteria" | "approach") => {
+  const removeArrayItem = (idx: number, arrayType: "goals" | "nonGoals" | "userStories" | "successMetrics" | "criteria" | "approach") => {
     if (arrayType === "goals") setEditGoals(editGoals.filter((_, i) => i !== idx));
     else if (arrayType === "nonGoals") setEditNonGoals(editNonGoals.filter((_, i) => i !== idx));
+    else if (arrayType === "userStories") setEditUserStories(editUserStories.filter((_, i) => i !== idx));
+    else if (arrayType === "successMetrics") setEditSuccessMetrics(editSuccessMetrics.filter((_, i) => i !== idx));
     else if (arrayType === "criteria") setEditAcceptanceCriteria(editAcceptanceCriteria.filter((_, i) => i !== idx));
     else if (arrayType === "approach") setEditImplementationApproach(editImplementationApproach.filter((_, i) => i !== idx));
   };
@@ -511,9 +563,12 @@ export default function FeatureDetailPage() {
     return (
       <div className="flex-1 p-10 text-center space-y-6">
         <h2 className="text-2xl font-bold">Feature request not found</h2>
-        <Button asChild>
-          <Link href={`/dashboard/projects/${projectId}`}>Back to Project</Link>
-        </Button>
+        <Link 
+          href={`/dashboard/projects/${projectId}`} 
+          className={buttonVariants({ variant: "default" })}
+        >
+          Back to Project
+        </Link>
       </div>
     );
   }
@@ -521,12 +576,32 @@ export default function FeatureDetailPage() {
   return (
     <div className="flex-1 p-6 md:p-10 space-y-8 bg-gradient-to-br from-background via-background to-accent/5 min-h-screen">
       {/* Back to Project Link */}
-      <Button variant="ghost" asChild className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
-        <Link href={`/dashboard/projects/${projectId}`}>
-          <ArrowLeft className="size-4" />
-          Back to Project details
-        </Link>
-      </Button>
+      <Link 
+        href={`/dashboard/projects/${projectId}`} 
+        className={buttonVariants({ variant: "ghost", className: "gap-2 -ml-2 text-muted-foreground hover:text-foreground" })}
+      >
+        <ArrowLeft className="size-4" />
+        Back to Project details
+      </Link>
+
+      {/* Pull Request Verification Warning Alert Banner */}
+      {(() => {
+        const latestPr = feature.pullRequests && feature.pullRequests.length > 0 ? feature.pullRequests[0] : null;
+        if (latestPr && latestPr.status === "needs_revision") {
+          return (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg p-4 flex items-start gap-3 shadow-md mb-6 animate-pulse">
+              <AlertTriangle className="size-5 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold uppercase tracking-wider">Verification Feedback Needed</h4>
+                <p className="text-xs text-foreground/80 leading-normal">
+                  Your last code review has outstanding feedback. Check the **Pull Requests** tab below for details on what is missing or incorrect.
+                </p>
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {/* Feature Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-accent/10 pb-6">
@@ -584,7 +659,7 @@ export default function FeatureDetailPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="mt-4">
-                  <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:opacity-95 text-white shadow-lg" onClick={handleGeneratePRD}>
+                  <Button type="button" size="lg" className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:opacity-95 text-white shadow-lg" onClick={(e) => handleGeneratePRD(e)}>
                     <Sparkles className="size-4 animate-spin" style={{ animationDuration: "3s" }} />
                     Generate PRD Draft
                   </Button>
@@ -639,7 +714,7 @@ export default function FeatureDetailPage() {
                       <Button variant="outline" size="sm" className="border-yellow-500/20 text-yellow-600 dark:text-yellow-500 hover:bg-yellow-500/10" onClick={() => setIsEditing(!isEditing)}>
                         {isEditing ? "View Draft" : "Edit Draft"}
                       </Button>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={handleApproveAndSave}>
+                      <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={(e) => handleApproveAndSave(e)}>
                         <Check className="size-4" />
                         Approve & Save
                       </Button>
@@ -744,6 +819,56 @@ export default function FeatureDetailPage() {
                         </div>
                       </div>
 
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* User Stories List */}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <Label>User Stories</Label>
+                            <Button type="button" variant="outline" size="xs" onClick={() => addArrayItem("userStories")} className="text-xs">
+                              + Add Story
+                            </Button>
+                          </div>
+                          <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {editUserStories.map((story, idx) => (
+                              <div key={idx} className="flex gap-2">
+                                <Input
+                                  value={story}
+                                  onChange={(e) => handleArrayChange(idx, e.target.value, "userStories")}
+                                  placeholder="As a [role], I want [action] so that [benefit]..."
+                                />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeArrayItem(idx, "userStories")} className="shrink-0 text-destructive">
+                                  <X className="size-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Success Metrics List */}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <Label>Success Metrics</Label>
+                            <Button type="button" variant="outline" size="xs" onClick={() => addArrayItem("successMetrics")} className="text-xs">
+                              + Add Metric
+                            </Button>
+                          </div>
+                          <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {editSuccessMetrics.map((metric, idx) => (
+                              <div key={idx} className="flex gap-2">
+                                <Input
+                                  value={metric}
+                                  onChange={(e) => handleArrayChange(idx, e.target.value, "successMetrics")}
+                                  placeholder="Describe how success is measured..."
+                                />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeArrayItem(idx, "successMetrics")} className="shrink-0 text-destructive">
+                                  <X className="size-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="edit-edgecases">Edge Cases</Label>
                         <Textarea
@@ -818,7 +943,7 @@ export default function FeatureDetailPage() {
 
                     <div className="flex justify-end gap-2 pt-4 border-t border-accent/10">
                       {isDraft ? (
-                        <Button onClick={handleApproveAndSave} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Button type="button" onClick={(e) => handleApproveAndSave(e)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                           Approve & Save to DB
                         </Button>
                       ) : (
@@ -831,11 +956,12 @@ export default function FeatureDetailPage() {
                 ) : (
                   /* High Fidelity View Tabs Layout */
                   <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="grid grid-cols-4 bg-muted/50 border border-accent/10 rounded-lg p-1">
+                    <TabsList className="grid grid-cols-5 bg-muted/50 border border-accent/10 rounded-lg p-1">
                       <TabsTrigger value="overview" className="gap-2"><Target className="size-4 shrink-0" />Overview</TabsTrigger>
                       <TabsTrigger value="requirements" className="gap-2"><ListChecks className="size-4 shrink-0" />Criteria</TabsTrigger>
                       <TabsTrigger value="implementation" className="gap-2"><Code className="size-4 shrink-0" />Approach</TabsTrigger>
                       <TabsTrigger value="specifications" className="gap-2"><FileText className="size-4 shrink-0" />Specifications</TabsTrigger>
+                      <TabsTrigger value="pull-requests" className="gap-2"><GitPullRequest className="size-4 shrink-0" />Pull Requests</TabsTrigger>
                     </TabsList>
 
                     {/* Overview & Goals */}
@@ -974,6 +1100,70 @@ export default function FeatureDetailPage() {
                         </CardContent>
                       </Card>
                     </TabsContent>
+
+                    <TabsContent value="pull-requests" className="mt-6 space-y-6">
+                      {feature.pullRequests && feature.pullRequests.length > 0 ? (
+                        feature.pullRequests.map((pr: any, i: number) => {
+                          const isReviewed = pr.status === "reviewed" || pr.status === "merged";
+                          const isFailed = pr.status === "needs_revision";
+                          
+                          return (
+                            <Card key={pr.id || i} className="border-accent/15 bg-card/25 overflow-hidden shadow-sm">
+                              <CardHeader className="bg-accent/5 py-4 px-6 border-b border-accent/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <GitPullRequest className="size-4 text-primary shrink-0" />
+                                    <span className="font-bold text-sm text-foreground">PR #{pr.prNumber}: {pr.title}</span>
+                                    <Badge className={
+                                      pr.status === "merged" ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
+                                      isReviewed ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                      isFailed ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                      "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                    }>
+                                      {pr.status.toUpperCase()}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    Repo: <span className="font-mono">{pr.repoFullName}</span> • Branch: <span className="font-mono">{pr.baseBranch}</span>
+                                  </p>
+                                </div>
+                                <div className="text-right text-[11px] text-muted-foreground">
+                                  {pr.reviewedAt ? `Reviewed: ${new Date(pr.reviewedAt).toLocaleString()}` : `Opened: ${new Date(pr.createdAt).toLocaleString()}`}
+                                </div>
+                              </CardHeader>
+                              
+                              <CardContent className="p-6 space-y-4">
+                                {pr.reviewComment ? (
+                                  <div className="space-y-3">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                      <Sparkles className="size-3.5 text-primary" />
+                                      AI Verification & Reviews Details
+                                    </h4>
+                                    <div className="bg-accent/5 border border-accent/10 rounded-lg p-4 font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed text-foreground/90 max-h-[350px] overflow-y-auto">
+                                      {pr.reviewComment}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="py-8 text-center text-xs text-muted-foreground space-y-2">
+                                    <Clock className="size-8 mx-auto text-muted-foreground/40 animate-pulse" />
+                                    <p className="font-semibold text-foreground">Pending verification scan...</p>
+                                    <p className="text-[10px]">The AI code reviewer will scan code modifications when synced via webhook notifications.</p>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })
+                      ) : (
+                        <Card className="border-accent/15 bg-card/25 py-12 text-center space-y-3">
+                          <GitPullRequest className="size-12 mx-auto text-muted-foreground/30 animate-pulse" />
+                          <h3 className="text-sm font-semibold text-foreground">No Pull Requests Synced Yet</h3>
+                          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                            Raise a Pull Request on GitHub matching this feature's codebase modifications to trigger automated verification and progress reporting.
+                          </p>
+                        </Card>
+                      )}
+                    </TabsContent>
                   </Tabs>
                 )}
               </div>
@@ -994,11 +1184,12 @@ export default function FeatureDetailPage() {
                   </CardDescription>
                 </div>
                 {feature.tasks && feature.tasks.length > 0 && (
-                  <Button variant="outline" size="sm" asChild className="gap-2 bg-card">
-                    <Link href={`/dashboard/projects/${projectId}/kanban`}>
-                      Go to Kanban Board <ArrowRight className="size-4" />
-                    </Link>
-                  </Button>
+                  <Link 
+                    href={`/dashboard/projects/${projectId}/kanban`}
+                    className={buttonVariants({ variant: "outline", size: "sm", className: "gap-2 bg-card" })}
+                  >
+                    Go to Kanban Board <ArrowRight className="size-4" />
+                  </Link>
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1028,7 +1219,7 @@ export default function FeatureDetailPage() {
                     <p className="text-sm text-muted-foreground">
                       No tasks have been generated for this PRD yet.
                     </p>
-                    <Button onClick={handleGenerateTasks} className="gap-2 bg-primary hover:bg-primary/95 text-white">
+                    <Button type="button" onClick={(e) => handleGenerateTasks(e)} className="gap-2 bg-primary hover:bg-primary/95 text-white">
                       <Sparkles className="size-4" />
                       Generate Tasks with AI
                     </Button>
@@ -1210,15 +1401,132 @@ export default function FeatureDetailPage() {
                     <SelectValue placeholder="Update Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SUBMITTED">Submitted</SelectItem>
-                    <SelectItem value="ANALYZING">Analyzing</SelectItem>
-                    <SelectItem value="PRD_GENERATED">PRD Generated</SelectItem>
-                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="DRAFT">Draft</SelectItem>
+                    <SelectItem value="PLANNING">Planning</SelectItem>
+                    <SelectItem value="IN_DEVELOPMENT">In Development</SelectItem>
+                    <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                    <SelectItem value="CHANGES_REQUIRED">Changes Required</SelectItem>
+                    <SelectItem value="READY_FOR_MERGE">Ready for Merge</SelectItem>
                     <SelectItem value="SHIPPED">Shipped</SelectItem>
-                    <SelectItem value="REJECTED">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {(() => {
+                const latestPr = feature.pullRequests && feature.pullRequests.length > 0 ? feature.pullRequests[0] : null;
+                if (latestPr) {
+                  const match = latestPr.reviewComment ? latestPr.reviewComment.match(/(\d+)%/) : null;
+                  const progressScore = match ? parseInt(match[1]) : 0;
+                  return (
+                    <div className="mt-6 pt-6 border-t border-accent/10 space-y-3">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">
+                        Linked PR Build Status
+                      </span>
+                      <div className="bg-accent/5 border border-accent/10 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-mono text-muted-foreground">PR #{latestPr.prNumber}</span>
+                          <Badge className={
+                            latestPr.status === "merged" ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
+                            latestPr.status === "READY_FOR_MERGE" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                            latestPr.status === "CHANGES_REQUIRED" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                            latestPr.status === "FEATURE_INCOMPLETE" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                            latestPr.status === "reviewed" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                            "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                          }>
+                            {latestPr.status.toUpperCase()}
+                          </Badge>
+                        </div>
+                        {latestPr.reviewComment && latestPr.reviewComment.includes("%") && (
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between text-[11px] font-medium text-foreground/95">
+                              <span>Verification Score</span>
+                              <span>{progressScore}%</span>
+                            </div>
+                            <div className="w-full bg-accent/20 rounded-full h-1.5 overflow-hidden">
+                              <div 
+                                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" 
+                                style={{ width: `${progressScore}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {feature.pullRequests && feature.pullRequests.length > 0 && feature.pullRequests[0].status !== "merged" && feature.pullRequests[0].status !== "closed" && (
+                <div className="mt-4 pt-4 border-t border-accent/15 flex flex-col gap-2">
+                  {(feature.pullRequests[0].status === "READY_FOR_MERGE" || feature.status === "READY_FOR_MERGE") && (
+                    <Button 
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5 flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                      disabled={isLoading}
+                      onClick={async () => {
+                        if (!confirm("Are you sure all tasks are complete and you want to merge this branch and ship it to production?")) return;
+                        try {
+                          setIsLoading(true);
+                          const res = await fetch("/api/verification/ship", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ featureId }),
+                          });
+                          
+                          const data = await res.json();
+                          if (!res.ok) {
+                            throw new Error(data.error || "Failed to ship feature");
+                          }
+                          
+                          toast.success("Feature successfully merged and shipped to production!");
+                          window.location.reload();
+                        } catch (err: any) {
+                          console.error(err);
+                          toast.error(err.message || "Could not ship feature. Verify tasks are complete.");
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                    >
+                      <CheckCircle className="size-4 animate-bounce" />
+                      Ship Feature (Merge PR)
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="destructive"
+                    className="w-full font-semibold text-xs h-9 gap-1.5 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-[1.02]"
+                    disabled={isLoading}
+                    onClick={async () => {
+                      if (!confirm("Are you sure you want to reject this feature? This will close the associated Pull Request.")) return;
+                      try {
+                        setIsLoading(true);
+                        const res = await fetch("/api/verification/reject", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ featureId }),
+                        });
+                        
+                        const data = await res.json();
+                        if (!res.ok) {
+                          throw new Error(data.error || "Failed to reject feature");
+                        }
+                        
+                        toast.success("Feature rejected and PR closed.");
+                        window.location.reload();
+                      } catch (err: any) {
+                        console.error(err);
+                        toast.error(err.message || "Could not reject feature.");
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                  >
+                    <XCircle className="size-4" />
+                    Reject PR & Feature
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,14 +1,26 @@
+import { getServerSession } from "@/features/auth/actions";
 import { prisma } from "@/lib/db";
 import { updateWorkspaceSchema } from "@/lib/validations";
 
 export async function GET(request: Request,{params}:{params:{id:string}}) {
   try {
+    const session = await getServerSession()
+    if(!session){
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const {id} = await params;
-    const workspaces = await prisma.workspace.findUnique({
+    const workspaces = await prisma.workspace.findFirst({
         where:{
-            id
+            id,
+            userId: session.user.id
         }
     });
+    if (!workspaces) {
+      return Response.json({ error: "Workspace not found or unauthorized" }, { status: 404 });
+    }
     return Response.json(workspaces,{status: 200});
   } catch (error) {
     console.error(error);
@@ -21,15 +33,29 @@ export async function GET(request: Request,{params}:{params:{id:string}}) {
 
 export async function DELETE(request: Request,{params}:{params:{id:string}}) {
   try {
+    const session = await getServerSession()
+    if(!session){
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const {id} = await params;
-    const workspace = await prisma.workspace.delete({
+
+    // Check ownership first or use deleteMany to filter by userId
+    const workspace = await prisma.workspace.deleteMany({
         where:{
-            id
+            id,
+            userId: session.user.id
         }
     });
+
+    if (workspace.count === 0) {
+      return Response.json({ error: "Workspace not found or unauthorized" }, { status: 404 });
+    }
+
     return Response.json({
         message: "Workspace deleted successfully",
-        data: workspace
     }, { status: 200 });
   } catch (error) {
     console.error(error);
@@ -42,6 +68,13 @@ export async function DELETE(request: Request,{params}:{params:{id:string}}) {
 
 export async function PATCH(request: Request,{params}:{params:{id:string}}) {
   try {
+    const session = await getServerSession()
+    if(!session){
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const {id} = await params;
     const body = await request.json();
     const parsed = updateWorkspaceSchema.safeParse(body);
@@ -54,6 +87,14 @@ export async function PATCH(request: Request,{params}:{params:{id:string}}) {
     if (name) {
       updateData.name = name;
       updateData.slug = name.toLowerCase().replace(/\s+/g, "-");
+    }
+
+    // Verify ownership
+    const existing = await prisma.workspace.findFirst({
+        where: { id, userId: session.user.id }
+    });
+    if (!existing) {
+      return Response.json({ error: "Workspace not found or unauthorized" }, { status: 404 });
     }
 
     const workspace = await prisma.workspace.update({

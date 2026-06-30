@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ShipFlow AI (ShipMate) — AI-Assisted Software Delivery Cockpit
 
-## Getting Started
+ShipFlow AI (ShipMate) is an event-driven, AI-orchestrated platform designed to manage the entire software product delivery lifecycle. It ingests feature requests, clarifies specifications, drafts Product Requirements Documents (PRDs), compiles ordered engineering backlog tasks, reviews pull requests automatically against PRD acceptance criteria, and squash-merges verified branches directly from a technical cockpit dashboard.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Technical Stack & Architecture
+
+* **Frontend**: Next.js 16 (App Router), TailwindCSS, Shadcn/ui elements, and Phosphor/Hugeicons packages.
+* **Authentication**: Better Auth (supporting GitHub & Google OAuth login).
+* **Database**: Prisma ORM with PostgreSQL database adapter.
+* **Background Processing**: Inngest background workers for serverless event-driven execution.
+* **Vector Semantic Context**: Pinecone database serverless namespaces for PR diff chunks indexing and codebase search context generation.
+* **AI Engine**: Vercel AI SDK mapping OpenRouter models (`openrouter/free` and `gpt-4o-mini`).
+
+---
+
+## ⚙️ Environment Configuration
+
+Create a `.env` file in the root directory and configure the following variables:
+
+```env
+# Database Connection
+DATABASE_URL="postgresql://username:password@localhost:5432/shipflow"
+
+# Better Auth Session Secrets
+BETTER_AUTH_SECRET="your_generated_secret_string"
+BETTER_AUTH_URL="http://localhost:3000"
+
+# GitHub App Configuration (GitHub OAuth & Webhook Octokit)
+GITHUB_CLIENT_ID="github_oauth_client_id"
+GITHUB_CLIENT_SECRET="github_oauth_client_secret"
+GITHUB_APP_ID="github_app_numeric_id"
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_APP_WEBHOOK_SECRET="github_webhook_handshake_secret"
+
+# AI Services (OpenRouter & OpenAI Provider keys)
+OPENAI_API_KEY="sk-proj-..."
+OPENAI_API_BASE="https://api.openai.com/v1" # or OpenRouter endpoints
+PINECONE_API_KEY="pinecone_console_api_key"
+PINECONE_INDEX="shipflow-index"
+
+# Razorpay Subscriptions (SaaS Billing Limit Enforcement)
+RAZORPAY_KEY_ID="rzp_test_key_id"
+RAZORPAY_KEY_SECRET="rzp_test_key_secret"
+RAZORPAY_PLAN_ID="plan_monthly_pro_subscription_id"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Follow these steps to run the application locally:
 
-## Learn More
+### 1. Install Dependencies
+```bash
+bun install
+# or npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Generate Prisma Client
+Since database migrations may be restricted in sandboxed environments, inspect `prisma/schema.prisma` and generate typing structures:
+```bash
+npx prisma generate
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Start Local Development Tunnel
+To route GitHub webhook deliveries to your local machine, spin up an ngrok or localtunnel instance pointing to port 3000:
+```bash
+ngrok http 3000
+```
+Update your GitHub App's **Webhook URL** and **Redirect URI** in the GitHub Developer Console with the ngrok forwarding domain (e.g. `https://<hash>.ngrok-free.app/api/github/webhook`).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Run Inngest Development Server
+Inngest schedules and queues background workers locally. Spin up the Inngest CLI dev server pointing to your Next.js serve port:
+```bash
+npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
+```
 
-## Deploy on Vercel
+### 5. Launch next.js Dev Platform
+Start your Next.js dashboard client:
+```bash
+bun run dev
+# or npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Workflows & Event Processing
+
+### 1. Requirement Refinement & Planning
+* When a feature request is created, select **Generate PRD**.
+* Engage with the **AI Assistant Chat** in the details tab. The AI updates the database PRD schema fields dynamically.
+* Approve the PRD to automatically trigger **Engineering Task Generation** and populate the project Kanban board.
+
+### 2. Automated Reviews & Verification Loop
+* The **Code Review Agent** triggers automatically upon PR `opened`, `synchronize`, or `reopened` webhook events. It saves code chunk embeddings to Pinecone, reviews code, and posts suggestions.
+* The **Verification Agent** triggers on review completions (`github/pr.reviewed`) and human GitHub feedback (`github/review.submitted`), auditing code changes against PRD acceptance criteria.
+* Once all Kanban tasks are checked as complete, developers can merge the branch directly by clicking **Ship Feature** on the dashboard.
