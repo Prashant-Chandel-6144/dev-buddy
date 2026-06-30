@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { createFeatureRequestSchema } from "@/lib/validations";
 import { getPineconeIndex } from "@/features/pinecone/client";
 
-export async function POST(request: Request,{params}:{params:{projectId:string}}) {
+export async function POST(request: Request,{params}:{params:Promise<{projectId:string}>}) {
   try {
     const session = await getServerSession()
     if(!session){
@@ -107,7 +107,7 @@ export async function POST(request: Request,{params}:{params:{projectId:string}}
   }
 }
 
-export async function GET(request: Request,{params}:{params:{projectId:string}}) {
+export async function GET(request: Request,{params}:{params:Promise<{projectId:string}>}) {
   try {
     const session = await getServerSession()
     if(!session){

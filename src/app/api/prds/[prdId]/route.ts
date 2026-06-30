@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { updatePRDSchema } from "@/lib/validations";
 import { getOpenAIClient } from "@/lib/agent";
 
-export async function GET(request: Request, { params }: { params: { prdId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ prdId: string }> }) {
     try {
         const session = await getServerSession()
         if (!session) {
@@ -53,7 +53,7 @@ export async function GET(request: Request, { params }: { params: { prdId: strin
 
 
 
-export async function PATCH(request: Request, { params }: { params: { prdId: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ prdId: string }> }) {
     try {
         const session = await getServerSession()
         if (!session) {
@@ -234,7 +234,7 @@ Return ONLY valid JSON in this exact format:
 }
 
 
-export async function DELETE(request: Request, { params }: { params: { prdId: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ prdId: string }> }) {
     try {
         const session = await getServerSession()
         if (!session) {

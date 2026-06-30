@@ -8,7 +8,7 @@ import { DashboardHeader } from "@/features/dashboard/components/dashboard-heade
 
 import { getInstallationStatus } from "@/features/github/server/installation";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { requireAuth } from "@/features/auth/actions";
 import { RepoList } from "@/features/dashboard/components/repo-list";
 import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/route";
@@ -24,9 +24,7 @@ function ReposNotConnected() {
       <p className="text-sm text-muted-foreground">
         Install the GitHub App first to see your repositories.
       </p>
-      <Button asChild>
-        <Link href={DASHBOARD_ROUTES.github}>Go to GitHub App</Link>
-      </Button>
+      <Link href={DASHBOARD_ROUTES.github} className={buttonVariants()}>Go to GitHub App</Link>
     </div>
   );
 }

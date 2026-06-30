@@ -4,7 +4,7 @@ import { updateFeatureRequestSchema } from "@/lib/validations";
 
 export async function GET(
   request: Request,
-  { params }: { params: { featureId: string, projectId: string } },
+  { params }: { params: Promise<{ featureId: string, projectId: string }> },
 ) {
   try {
     const session = await getServerSession()
@@ -69,7 +69,7 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { featureId: string, projectId: string } },
+  { params }: { params: Promise<{ featureId: string, projectId: string }> },
 ) {
   try {
     const session = await getServerSession()
@@ -134,7 +134,7 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { featureId: string, projectId: string } },
+  { params }: { params: Promise<{ featureId: string, projectId: string }> },
 ) {
   try {
     const session = await getServerSession()

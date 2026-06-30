@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Lightbulb, Search, Calendar, Folder, ArrowRight, Loader2, ClipboardList, CheckCircle2, LayoutList, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -211,11 +211,9 @@ export default function FeatureRequestsOverviewPage() {
                   {f.status.replace("_", " ")}
                 </Badge>
                 
-                <Button size="sm" asChild className="gap-1.5 text-xs shadow-xs">
-                  <Link href={`/dashboard/projects/${f.projectId}/features/${f.id}`}>
-                    Process Feature <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </Button>
+                <Link href={`/dashboard/projects/${f.projectId}/features/${f.id}`} className={`${buttonVariants({ size: "sm" })} gap-1.5 text-xs shadow-xs`}>
+                  Process Feature <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
               </CardFooter>
             </Card>
           ))}

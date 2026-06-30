@@ -203,10 +203,12 @@ export default function DashboardOverviewPage() {
 
           {/* New Workspace Trigger */}
           <Dialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0 bg-card border border-border hover:bg-muted rounded-lg" title="New Workspace">
-                <Plus className="size-4" />
-              </Button>
+            <DialogTrigger
+              render={
+                <Button variant="outline" size="icon" className="shrink-0 bg-card border border-border hover:bg-muted rounded-lg" title="New Workspace" />
+              }
+            >
+              <Plus className="size-4" />
             </DialogTrigger>
             <DialogContent className="sm:max-w-[400px] bg-card border border-border">
               <DialogHeader>
@@ -263,11 +265,13 @@ export default function DashboardOverviewPage() {
           </CardHeader>
           <CardContent>
             <Dialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 text-xs">
-                  <PlusCircle className="size-4" />
-                  Create First Workspace
-                </Button>
+              <DialogTrigger
+                render={
+                  <Button className="gap-2 text-xs" />
+                }
+              >
+                <PlusCircle className="size-4" />
+                Create First Workspace
               </DialogTrigger>
             </Dialog>
           </CardContent>
@@ -282,11 +286,13 @@ export default function DashboardOverviewPage() {
 
             {/* New Project Trigger */}
             <Dialog open={isProjectModalOpen} onOpenChange={setIsProjectModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-1.5 bg-primary hover:opacity-90 text-primary-foreground text-xs font-medium rounded-lg h-8">
-                  <Plus className="size-3.5" />
-                  New Project
-                </Button>
+              <DialogTrigger
+                render={
+                  <Button className="gap-1.5 bg-primary hover:opacity-90 text-primary-foreground text-xs font-medium rounded-lg h-8" />
+                }
+              >
+                <Plus className="size-3.5" />
+                New Project
               </DialogTrigger>
               <DialogContent className="sm:max-w-[480px] bg-card border border-border">
                 <DialogHeader>

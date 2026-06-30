@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { featureId: string } }
+  { params }: { params: Promise<{ featureId: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -18,10 +18,6 @@ export async function GET(
       where: { id: featureId },
       include: {
         tasks: true,
-        pullRequests: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
       },
     });
 
@@ -29,7 +25,12 @@ export async function GET(
       return NextResponse.json({ error: "Feature request not found" }, { status: 404 });
     }
 
-    const pr = feature.pullRequests[0] || null;
+    // Fetch pull requests separately (workaround for generated client missing the relation type)
+    const pullRequests = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT * FROM "pull_request" WHERE "featureRequestId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
+      featureId
+    );
+    const pr = pullRequests[0] || null;
 
     // Calculate task progress metrics dynamically
     const totalTasks = feature.tasks.length;

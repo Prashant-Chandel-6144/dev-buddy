@@ -11,7 +11,7 @@ import type { GithubInstallationStatus } from "@/features/dashboard/lib/types";
 import { getGithubInstallUrl } from "@/features/github/utils/github-app";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
     Card,
     CardContent,
@@ -71,13 +71,11 @@ function ConnectedActions() {
 
 function DisconnectedActions({ installUrl }: { installUrl: string }) {
     return (
-        <Button asChild className={statusButtonClass.success}>
-            <a href={installUrl}>
-                <RiGithubFill className="size-5" />
-                Install GitHub App
-                <ExternalLink className="size-3 opacity-80" />
-            </a>
-        </Button>
+        <a href={installUrl} className={cn(buttonVariants(), statusButtonClass.success)}>
+            <RiGithubFill className="size-5" />
+            Install GitHub App
+            <ExternalLink className="size-3 opacity-80" />
+        </a>
     );
 }
 

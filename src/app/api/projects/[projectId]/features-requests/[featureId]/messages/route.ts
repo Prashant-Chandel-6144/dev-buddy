@@ -4,7 +4,7 @@ import { createMessageSchema } from "@/lib/validations/message"
 import { getOpenAIClient } from "@/lib/agent"
 import { aiPRDResponseSchema } from "@/lib/validations/prd"
 
-export async function GET(request:Request,{params}:{params:{featureId:string,projectId:string}}){
+export async function GET(request:Request,{params}:{params:Promise<{featureId:string,projectId:string}>}){
   try{
     const session = await getServerSession()
     if(!session){
@@ -58,7 +58,7 @@ export async function GET(request:Request,{params}:{params:{featureId:string,pro
   }
 }
 
-export async function POST(request:Request,{params}:{params:{featureId:string,projectId:string}}) {
+export async function POST(request:Request,{params}:{params:Promise<{featureId:string,projectId:string}>}) {
   try{
     const session = await getServerSession()
     if(!session){

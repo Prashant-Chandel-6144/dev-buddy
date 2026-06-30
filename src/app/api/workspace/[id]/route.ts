@@ -2,7 +2,7 @@ import { getServerSession } from "@/features/auth/actions";
 import { prisma } from "@/lib/db";
 import { updateWorkspaceSchema } from "@/lib/validations";
 
-export async function GET(request: Request,{params}:{params:{id:string}}) {
+export async function GET(request: Request,{params}:{params:Promise<{id:string}>}) {
   try {
     const session = await getServerSession()
     if(!session){
@@ -31,7 +31,7 @@ export async function GET(request: Request,{params}:{params:{id:string}}) {
   }
 }
 
-export async function DELETE(request: Request,{params}:{params:{id:string}}) {
+export async function DELETE(request: Request,{params}:{params:Promise<{id:string}>}) {
   try {
     const session = await getServerSession()
     if(!session){
@@ -66,7 +66,7 @@ export async function DELETE(request: Request,{params}:{params:{id:string}}) {
   }
 }
 
-export async function PATCH(request: Request,{params}:{params:{id:string}}) {
+export async function PATCH(request: Request,{params}:{params:Promise<{id:string}>}) {
   try {
     const session = await getServerSession()
     if(!session){
